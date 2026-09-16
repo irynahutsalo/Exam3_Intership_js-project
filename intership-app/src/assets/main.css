@@ -1,0 +1,76 @@
+@import "tailwindcss";
+@theme {
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --color-base: #a8c4d8;
+  --color-soft-blue: #78aacd;
+  --color-light-sky: #c8e4f5;
+  --color-steel-blue: #627d98;
+
+  --color-navy-dark: #102a43;
+
+  --color-text-muted: #8faabb;
+  --color-muted: #8faabb;
+
+  --width-full: 100%;
+  --grid-gap: 10px;
+  --width-content: 1280px;
+
+  /* Typography text colors */
+  --color-text-main: #102a43;
+  --color-text-accent: #ffffff;
+}
+
+body {
+  margin: 0;
+  min-height: 150vh;
+  font-family: var(--font-sans);
+  background-color: var(--color-base);
+  
+  /* Soft background gradients with opacity */
+  background-image: 
+    /* Light top-left glow */
+    radial-gradient(circle at 20% 20%, rgba(200, 228, 245, 0.8) 0%, transparent 60%),
+    
+    /* Soft medium-blue shadow on the right (without sharp dark core) */
+    radial-gradient(circle at 70% 70%, rgba(98, 125, 152, 0.45) 0%, transparent 70%),
+    
+    /* Subtle bottom-left glow */
+    radial-gradient(circle at 10% 80%, rgba(120, 170, 205, 0.5) 0%, transparent 50%);
+    
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+/* #app {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-weight: normal;
+}
+
+a,
+.green {
+  text-decoration: none;
+  color: hsla(160, 100%, 37%, 1);
+  transition: 0.4s;
+  padding: 3px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(160, 100%, 37%, 0.2);
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    display: flex;
+    place-items: center;
+  }
+
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 0 2rem;
+  }
+} */
