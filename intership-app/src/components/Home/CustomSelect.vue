@@ -1,21 +1,18 @@
 <template>
-  <div class="relative">
+  <div class="relative w-full">
     <!-- Select trigger button -->
     <button 
       @click="$emit('toggle')"
       type="button"
-      class="w-full h-[52px] px-5 bg-white/60 border border-white/80 rounded-2xl flex items-center justify-between text-left text-[15px] focus:outline-none transition-all cursor-pointer"
+      class="w-full h-[52px] px-5 bg-white/60 border border-white/80 rounded-2xl flex items-center justify-between text-left text-[15px] focus:outline-none transition-all cursor-pointer shadow-sm"
     >
-      <span 
-        :class="modelValue ? 'text-text-main font-medium' : 'text-text-muted'"
-        :style="!modelValue ? 'color: var(--color-text-muted)' : ''"
-      >
+      <span class="text-[#102a43] font-medium truncate">
         {{ modelValue || placeholder }}
       </span>
 
       <!-- Arrow indicator -->
       <svg 
-        class="w-4 h-4 text-text-main/50 transition-transform duration-200" 
+        class="w-4 h-4 text-[#102a43]/50 transition-transform duration-200 shrink-0 ml-2" 
         :class="{ 'rotate-180': isOpen }"
         xmlns="http://www.w3.org/2000/svg" 
         fill="none" 
@@ -26,17 +23,17 @@
       </svg>
     </button>
 
-    <!-- Dropdown list -->
+    <!-- Dropdown list with clean scroll container -->
     <div 
       v-if="isOpen" 
-      class="absolute z-30 w-full mt-2 bg-white/95 border border-white rounded-2xl shadow-lg backdrop-blur-md overflow-hidden py-1 max-h-[240px] overflow-y-auto"
+      class="absolute left-0 right-0 z-50 mt-2 bg-white/95 border border-white/90 rounded-2xl shadow-xl backdrop-blur-md py-1 max-h-[220px] overflow-y-auto"
     >
       <div 
         v-for="option in options" 
         :key="option"
         @click="selectOption(option)"
-        class="px-5 py-3 text-[15px] text-text-main font-medium hover:bg-navy-dark hover:text-white cursor-pointer transition-colors"
-        :class="{ 'bg-navy-dark text-white': modelValue === option }"
+        class="px-5 py-3 text-[14px] text-[#102a43] font-medium hover:bg-[#102a43] hover:text-white cursor-pointer transition-colors"
+        :class="{ 'bg-[#102a43] text-white': modelValue === option }"
       >
         {{ option }}
       </div>
@@ -46,16 +43,16 @@
 
 <script setup>
 defineProps({
-  modelValue: String,   // Selected value passed from parent
-  placeholder: String,  // Default input text
-  options: Array,       // Available options list
-  isOpen: Boolean       // Controls dropdown visibility state
+  modelValue: String,   
+  placeholder: String,  
+  options: Array,       
+  isOpen: Boolean       
 })
 
 const emit = defineEmits(['update:modelValue', 'toggle', 'select'])
 
 const selectOption = (option) => {
-  emit('update:modelValue', option) // Emit value update to parent
+  emit('update:modelValue', option) 
   emit('select', option)
 }
 </script>

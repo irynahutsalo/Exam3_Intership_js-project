@@ -31,12 +31,17 @@
       />
     </div>
 
-    <!-- Step 3: Internship fields dynamically filtered by study programme -->
+    <!-- Step 3: Internship fields dynamically filtered by study programme (Optional) -->
     <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
       <div class="flex items-center justify-between mb-2">
-        <label class="block text-[16px] font-bold text-text-main">
-          3. What kind of internship are you looking for?
-        </label>
+        <div class="flex items-center space-x-2">
+          <label class="block text-[16px] font-bold text-text-main">
+            3. What kind of internship are you looking for?
+          </label>
+          <span class="px-2.5 py-0.5 bg-white/60 text-text-muted text-[12px] rounded-full font-medium" style="color: var(--color-text-muted);">
+            Optional
+          </span>
+        </div>
         <button 
           @click="toggleSelectAllFields" 
           type="button" 
@@ -95,11 +100,14 @@
       </div>
     </div>
 
-    <!-- Submit Button -->
+    <!-- Submit Button (Темна за замовчуванням, ховер акцентний / світліший) -->
     <button 
+      @click="handleSubmit"
       type="button" 
-      class="w-full h-[52px] mt-4 bg-white/20 border border-white/40 rounded-2xl text-text-main/40 font-semibold text-[15px] transition-all"
-      :class="isFormValid ? 'bg-navy-dark text-white cursor-pointer hover:bg-navy-dark/90 border-transparent shadow-md' : 'cursor-not-allowed'"
+      class="w-full h-[52px] mt-4 rounded-2xl font-semibold text-[15px] transition-all duration-300 shadow-sm"
+      :class="isFormValid 
+        ? 'bg-navy-dark text-white hover:bg-[#1f3f5b] cursor-pointer shadow-md' 
+        : 'bg-navy-dark/40 text-white/50 cursor-not-allowed'"
       :disabled="!isFormValid"
     >
       Find companies
@@ -109,16 +117,16 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import CustomSelect from './CustomSelect.vue'
 
+const router = useRouter()
 const activeDropdown = ref(null)
 
-// Починаємо з повністю порожніх полів, щоб усе розкривалося поетапно
 const selectedInstitution = ref('')
 const selectedProgramme = ref('')
 const selectedFields = ref([])
 const selectedLanguages = ref([])
-const validationError = ref(false)
 
 const institutions = ref([
   'SEA - Syddansk Erhvervsakademi'
@@ -191,7 +199,6 @@ const isAllFieldsSelected = computed(() => {
 })
 
 const toggleSelectAllFields = () => {
-  clearValidationError()
   if (isAllFieldsSelected.value) {
     selectedFields.value = []
   } else {
@@ -205,7 +212,6 @@ const toggleDropdown = (name) => {
 
 const handleInstitutionSelect = () => {
   activeDropdown.value = null
-  // Якщо міняють заклад, скидаємо програму та поля
   selectedProgramme.value = ''
   selectedFields.value = []
 }
@@ -215,20 +221,21 @@ const handleProgrammeSelect = () => {
   selectedFields.value = []
 }
 
-const clearValidationError = () => {
-  validationError.value = false
-}
-
 const isFormValid = computed(() => {
-  return selectedInstitution.value && 
-         selectedProgramme.value && 
-         selectedFields.value.length > 0
+  return Boolean(selectedInstitution.value && selectedProgramme.value)
 })
 
 const handleSubmit = () => {
-  if (!isFormValid.value) {
-    validationError.value = true
-    return
+  if (!isFormValid.value) return
+
+  const filterState = {
+    institution: selectedInstitution.value,
+    programme: selectedProgramme.value,
+    fields: selectedFields.value,
+    languages: selectedLanguages.value
   }
+  localStorage.setItem('user_search_filters', JSON.stringify(filterState))
+
+  router.push('/companies')
 }
 </script>

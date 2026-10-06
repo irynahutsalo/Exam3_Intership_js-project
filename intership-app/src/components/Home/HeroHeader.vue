@@ -1,8 +1,8 @@
 <template>
   <section class="text-center pt-[80px] pb-8 max-w-[var(--width-content)] mx-auto px-6">
     <!-- Main Title: 62px -->
-    <h1 class="text-[62px] font-bold text-text-accent tracking-tight leading-tight mb-3">
-      Find your internship
+    <h1 class="text-[62px] font-bold text-text-accent tracking-tight leading-tight mb-3 uppercase">
+      Find your <span class="text-accent">intern</span>ship
     </h1>
     
     <!-- Subtitle Description: 18px -->
