@@ -31,12 +31,55 @@
       />
     </div>
 
-    <!-- Step 3: Internship fields dynamically filtered by study programme (Optional) -->
+    <!-- Step 3: City selection (Compact scrollable container) -->
     <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
       <div class="flex items-center justify-between mb-2">
         <div class="flex items-center space-x-2">
           <label class="block text-[16px] font-bold text-text-main">
-            3. What kind of internship are you looking for?
+            3. Select cities
+          </label>
+          <span class="px-2.5 py-0.5 bg-white/60 text-[12px] rounded-full font-medium" style="color: var(--color-text-muted);">
+            Optional
+          </span>
+        </div>
+        <button 
+          @click="toggleSelectAllCities" 
+          type="button" 
+          class="text-[14px] text-text-main/70 hover:text-text-main font-medium cursor-pointer transition-colors"
+        >
+          {{ isAllCitiesSelected ? 'Deselect all' : 'Select all' }}
+        </button>
+      </div>
+      <p class="text-[13px] text-text-muted mb-4" style="color: var(--color-text-muted);">
+        Select one or more.
+      </p>
+
+      <!-- Scrollable container with reduced max-height -->
+      <div class="max-h-[160px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-3">
+          <label 
+            v-for="city in cities" 
+            :key="city" 
+            class="flex items-center space-x-3 cursor-pointer text-[15px] text-text-main font-medium select-none"
+          >
+            <input 
+              type="checkbox" 
+              :value="city" 
+              v-model="selectedCities"
+              class="w-4 h-4 rounded border-white/80 text-navy-dark focus:ring-0 cursor-pointer shrink-0"
+            />
+            <span class="truncate">{{ city }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4: Internship fields dynamically filtered by study programme (Optional) -->
+    <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+          <label class="block text-[16px] font-bold text-text-main">
+            4. What kind of internship are you looking for?
           </label>
           <span class="px-2.5 py-0.5 bg-white/60 text-text-muted text-[12px] rounded-full font-medium" style="color: var(--color-text-muted);">
             Optional
@@ -72,13 +115,13 @@
       </div>
     </div>
 
-    <!-- Step 4: Preferred language (Optional) -->
+    <!-- Step 5: Preferred language (Optional) -->
     <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
       <div class="flex items-center space-x-2 mb-4">
         <label class="block text-[16px] font-bold text-text-main">
-          4. Preferred language
+          5. Preferred language
         </label>
-        <span class="px-2.5 py-0.5 bg-white/60 text-text-muted text-[12px] rounded-full font-medium" style="color: var(--color-text-muted);">
+        <span class="px-2.5 py-0.5 bg-white/60 text-[12px] rounded-full font-medium" style="color: var(--color-text-muted);">
           Optional
         </span>
       </div>
@@ -100,7 +143,7 @@
       </div>
     </div>
 
-    <!-- Submit Button (Темна за замовчуванням, ховер акцентний / світліший) -->
+    <!-- Submit Button -->
     <button 
       @click="handleSubmit"
       type="button" 
@@ -119,12 +162,14 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomSelect from './CustomSelect.vue'
+import companiesData from '@/data/companies.json'
 
 const router = useRouter()
 const activeDropdown = ref(null)
 
 const selectedInstitution = ref('')
 const selectedProgramme = ref('')
+const selectedCities = ref([])
 const selectedFields = ref([])
 const selectedLanguages = ref([])
 
@@ -144,6 +189,32 @@ const studyProgrammes = ref([
   'Bygningskonstruktør',
   'Cyber Security'
 ])
+
+// Dynamically collect unique cities from JSON file
+const cities = computed(() => {
+  const citySet = new Set()
+  companiesData.forEach(item => {
+    if (item.city) {
+      const trimmed = item.city.trim()
+      if (trimmed) citySet.add(trimmed)
+    }
+  })
+  return Array.from(citySet).sort()
+})
+
+// Toggle select all / deselect all for cities
+const isAllCitiesSelected = computed(() => {
+  return cities.value.length > 0 && 
+         selectedCities.value.length === cities.value.length
+})
+
+const toggleSelectAllCities = () => {
+  if (isAllCitiesSelected.value) {
+    selectedCities.value = []
+  } else {
+    selectedCities.value = [...cities.value]
+  }
+}
 
 const programFieldsMap = {
   'Multimedia Design': [
@@ -213,11 +284,13 @@ const toggleDropdown = (name) => {
 const handleInstitutionSelect = () => {
   activeDropdown.value = null
   selectedProgramme.value = ''
+  selectedCities.value = []
   selectedFields.value = []
 }
 
 const handleProgrammeSelect = () => {
   activeDropdown.value = null
+  selectedCities.value = []
   selectedFields.value = []
 }
 
@@ -231,6 +304,7 @@ const handleSubmit = () => {
   const filterState = {
     institution: selectedInstitution.value,
     programme: selectedProgramme.value,
+    cities: selectedCities.value,
     fields: selectedFields.value,
     languages: selectedLanguages.value
   }
@@ -239,3 +313,21 @@ const handleSubmit = () => {
   router.push('/companies')
 }
 </script>
+
+<style scoped>
+/* Custom smooth scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(16, 42, 67, 0.2);
+  border-radius: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(16, 42, 67, 0.4);
+}
+</style>

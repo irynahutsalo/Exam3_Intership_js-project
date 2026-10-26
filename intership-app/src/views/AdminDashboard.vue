@@ -136,7 +136,13 @@
               <tbody class="divide-y divide-white/40 text-sm text-[#102a43]">
                 
                 <tr v-for="company in filteredCompanies" :key="company.companyId" class="hover:bg-white/35 transition-colors">
-                  <td class="p-5 font-bold">{{ company.brandName || company['name (source / legal)'] }}</td>
+                  <td class="p-5">
+                    <div class="font-bold text-[#102a43]">{{ company.brandName || company['name (source / legal)'] }}</div>
+                    <!-- Display short description snippet inside table -->
+                    <div v-if="company.description" class="text-xs text-[#627d98] mt-1 line-clamp-1 max-w-xs">
+                      {{ company.description }}
+                    </div>
+                  </td>
                   <td class="p-5 text-[#627d98] font-medium">{{ company.city }}</td>
                   
                   <!-- Programmes badges -->
@@ -210,9 +216,9 @@
       </div>
     </main>
 
-    <!-- MODAL WINDOW ПЕРЕНЕСЕНИЙ ЗОВНІ (ПОВНИЙ ЕКРАН FIXED) -->
+    <!-- MODAL WINDOW (FULLSCREEN FIXED) -->
     <div v-if="isModalOpen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px;">
-      <div style="background-color: #e4eff7; border: 1px solid #ffffff; border-radius: 28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); width: 100%; max-width: 500px; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="background-color: #e4eff7; border: 1px solid #ffffff; border-radius: 28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.6); padding-bottom: 12px;">
           <h2 style="font-size: 20px; font-weight: 800; color: #102a43; margin: 0;">
@@ -242,6 +248,17 @@
               placeholder="e.g. Esbjerg"
               style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500;"
             />
+          </div>
+
+          <!-- Description Field -->
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Description</label>
+            <textarea 
+              v-model="form.description" 
+              rows="3"
+              placeholder="Enter company description..."
+              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500; resize: vertical;"
+            ></textarea>
           </div>
 
           <div>
@@ -316,6 +333,7 @@ const form = ref({
   companyId: null,
   brandName: '',
   city: '',
+  description: '',
   sourceProgrammes: '',
   websiteLanguages: '',
   status: 'active'
@@ -328,6 +346,7 @@ onMounted(() => {
   } else {
     companies.value = initialCompaniesData.map(item => ({
       ...item,
+      description: item.description || item['description'] || '',
       status: item.status || 'active'
     }))
     localStorage.setItem('companies_list', JSON.stringify(companies.value))
@@ -387,6 +406,7 @@ const openCreateModal = () => {
     companyId: Date.now(),
     brandName: '',
     city: '',
+    description: '',
     sourceProgrammes: '',
     websiteLanguages: 'DK, EN',
     status: 'active'
@@ -400,6 +420,7 @@ const editCompany = (company) => {
     companyId: company.companyId,
     brandName: company.brandName || company['name (source / legal)'] || '',
     city: company.city || '',
+    description: company.description || company['description'] || '',
     sourceProgrammes: company.sourceProgrammes || '',
     websiteLanguages: company.websiteLanguages || '',
     status: company.status || 'active'
@@ -419,6 +440,7 @@ const saveCompany = () => {
         ...companies.value[index],
         brandName: form.value.brandName,
         city: form.value.city,
+        description: form.value.description,
         sourceProgrammes: form.value.sourceProgrammes,
         websiteLanguages: form.value.websiteLanguages,
         status: form.value.status
@@ -429,6 +451,7 @@ const saveCompany = () => {
       companyId: form.value.companyId,
       brandName: form.value.brandName,
       city: form.value.city,
+      description: form.value.description,
       sourceProgrammes: form.value.sourceProgrammes,
       websiteLanguages: form.value.websiteLanguages,
       status: form.value.status

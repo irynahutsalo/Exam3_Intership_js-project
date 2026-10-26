@@ -1,17 +1,27 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import CustomSelect from '@/components/Home/CustomSelect.vue';
 import companiesData from '@/data/companies.json';
+import jsPDF from 'jspdf';
 
 const router = useRouter();
 const companies = ref([]);
 
 const selectedProgramme = ref('All programmes');
 const isProgrammeOpen = ref(false);
+
+// Array for multiple selected cities (checkboxes)
+const selectedCities = ref([]);
+
 const selectedFields = ref([]);
 const languageEnglish = ref(false);
 const languageDanish = ref(false);
+
+// Search and Pagination states
+const searchQuery = ref('');
+const currentPage = ref(1);
+const itemsPerPage = 8;
 
 const studyProgrammes = [
   'Datamatiker / Computer Science',
@@ -25,6 +35,18 @@ const studyProgrammes = [
   'Bygningskonstruktør',
   'Cyber Security'
 ];
+
+// Dynamically collect unique cities from available companies
+const availableCities = computed(() => {
+  const citySet = new Set();
+  companies.value.forEach(c => {
+    if (c.city) {
+      const trimmed = c.city.trim();
+      if (trimmed) citySet.add(trimmed);
+    }
+  });
+  return Array.from(citySet).sort();
+});
 
 const programFieldsMap = {
   'Multimedia Design': [
@@ -77,7 +99,10 @@ const availableInternshipFields = computed(() => {
 });
 
 onMounted(() => {
-    // Завантажуємо стан компаній
+    // Scroll to the top of the page smoothly on mount
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Load companies state
     const saved = localStorage.getItem('companies_list');
     const rawData = saved ? JSON.parse(saved) : companiesData;
 
@@ -93,7 +118,8 @@ onMounted(() => {
         return {
             id: item.companyId,
             brandName: item.brandName || item['name (source / legal)'],
-            city: item.city,
+            city: item.city ? item.city.trim() : '',
+            description: item.description || item['description'] || '',
             sourceProgrammes: progs,
             websiteLanguages: item.websiteLanguages ? item.websiteLanguages.split(/[,;]/).map(l => l.trim().toLowerCase()).filter(Boolean) : []
         };
@@ -103,20 +129,44 @@ onMounted(() => {
         localStorage.setItem('companies_list', JSON.stringify(rawData));
     }
 
-    // Зчитуємо фільтри, передані з головної сторінки
+    // Read saved filters passed from the home search card
     const savedFilters = localStorage.getItem('user_search_filters');
     if (savedFilters) {
         try {
             const parsed = JSON.parse(savedFilters);
             if (parsed.programme) selectedProgramme.value = parsed.programme;
-            if (parsed.fields) selectedFields.value = parsed.fields;
-            if (parsed.english !== undefined) languageEnglish.value = parsed.english;
-            if (parsed.danish !== undefined) languageDanish.value = parsed.danish;
+            
+            if (parsed.cities && Array.isArray(parsed.cities)) {
+                selectedCities.value = parsed.cities;
+            } else if (parsed.city && parsed.city !== 'All cities') {
+                selectedCities.value = [parsed.city];
+            }
+
+            if (parsed.fields && Array.isArray(parsed.fields)) {
+                selectedFields.value = parsed.fields;
+            }
+
+            if (parsed.languages && Array.isArray(parsed.languages)) {
+                languageEnglish.value = parsed.languages.includes('English');
+                languageDanish.value = parsed.languages.includes('Danish');
+            }
         } catch (e) {
-            console.error("Error loading filters", e);
+            console.error("Error loading filters from storage", e);
         }
     }
 });
+
+// Function to clear all filters and search state
+const clearAllFilters = () => {
+  selectedProgramme.value = 'All programmes';
+  selectedCities.value = [];
+  selectedFields.value = [];
+  languageEnglish.value = false;
+  languageDanish.value = false;
+  searchQuery.value = '';
+  currentPage.value = 1;
+  localStorage.removeItem('user_search_filters');
+};
 
 const programmeMapping = {
   'Multimedia Design': ['multimedia', 'multimediedesigner'],
@@ -131,10 +181,10 @@ const programmeMapping = {
   'Cyber Security': ['security', 'cyber', 'it']
 };
 
-// М'яка фільтрація (чекбокси опціональні і не блокують результат)
+// Filter companies based on programme, cities, fields, languages, and name search query
 const filteredCompanies = computed(() => {
     return companies.value.filter(company => {
-        // 1. Програма
+        // 1. Programme filter
         let matchesProgramme = true;
         if (selectedProgramme.value && selectedProgramme.value !== 'All programmes') {
             const keywords = programmeMapping[selectedProgramme.value] || [selectedProgramme.value.toLowerCase()];
@@ -144,19 +194,27 @@ const filteredCompanies = computed(() => {
             });
         }
         
-        // 2. Чекбокси напрямів (опціонально)
+        // 2. Cities filter (checkboxes: if none selected, show all)
+        let matchesCity = true;
+        if (selectedCities.value.length > 0) {
+            matchesCity = selectedCities.value.some(city => 
+                company.city.toLowerCase() === city.toLowerCase()
+            );
+        }
+
+        // 3. Internship fields filter (optional)
         let matchesFields = true;
         if (selectedFields.value.length > 0) {
             const hasFieldMatch = selectedFields.value.some(field => {
                 return company.sourceProgrammes.some(p => p.toLowerCase().includes(field.toLowerCase())) ||
                        (company.brandName && company.brandName.toLowerCase().includes(field.toLowerCase()));
             });
-            if (hasFieldMatch) {
-                matchesFields = true;
+            if (!hasFieldMatch) {
+                matchesFields = false;
             }
         }
 
-        // 3. Мова
+        // 4. Language filter
         let matchesLanguage = true;
         if (languageEnglish.value && !company.websiteLanguages.includes('en') && !company.websiteLanguages.includes('english')) {
             matchesLanguage = false;
@@ -165,12 +223,76 @@ const filteredCompanies = computed(() => {
             matchesLanguage = false;
         }
 
-        return matchesProgramme && matchesFields && matchesLanguage;
+        // 5. Name search query filter
+        let matchesSearch = true;
+        if (searchQuery.value.trim()) {
+            const query = searchQuery.value.toLowerCase();
+            matchesSearch = company.brandName && company.brandName.toLowerCase().includes(query);
+        }
+
+        return matchesProgramme && matchesCity && matchesFields && matchesLanguage && matchesSearch;
     });
+});
+
+// Pagination computed properties
+const totalPages = computed(() => {
+  return Math.ceil(filteredCompanies.value.length / itemsPerPage) || 1;
+});
+
+const paginatedCompanies = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return filteredCompanies.value.slice(start, end);
+});
+
+// Reset page to 1 when any filter or search query changes
+watch([selectedProgramme, selectedCities, selectedFields, languageEnglish, languageDanish, searchQuery], () => {
+  currentPage.value = 1;
 });
 
 const openDetails = (id) => {
     router.push(`/company/${id}`);
+};
+
+// Function to download filtered companies list as PDF using jsPDF
+const downloadPDF = () => {
+  const doc = new jsPDF();
+  let yPosition = 20;
+
+  doc.setFontSize(18);
+  doc.text('Filtered Companies List', 14, yPosition);
+  yPosition += 10;
+
+  doc.setFontSize(10);
+  doc.text(`Total found: ${filteredCompanies.value.length}`, 14, yPosition);
+  yPosition += 10;
+
+  filteredCompanies.value.forEach((company, index) => {
+    if (yPosition > 270) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${index + 1}. ${company.brandName} (${company.city || 'N/A'})`, 14, yPosition);
+    yPosition += 6;
+
+    if (company.description) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const splitDesc = doc.splitTextToSize(company.description, 180);
+      doc.text(splitDesc, 14, yPosition);
+      yPosition += (splitDesc.length * 4) + 4;
+    }
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.text(`Programmes: ${company.sourceProgrammes.join(', ') || 'None'}`, 14, yPosition);
+    yPosition += 10;
+  });
+
+  doc.save('filtered-companies.pdf');
 };
 </script>
 
@@ -188,12 +310,20 @@ const openDetails = (id) => {
         <div class="lg:col-span-1">
           <div class="bg-[#e4eff7]/95 backdrop-blur-md rounded-[28px] border border-white/80 shadow-md">
             
-            <div class="bg-[#102a43] text-white p-5 font-bold text-lg rounded-t-[28px]">
-              Active Filters
+            <div class="bg-[#102a43] text-white p-5 font-bold text-lg rounded-t-[28px] flex justify-between items-center">
+              <span>Active Filters</span>
+              <!-- Clean All Button -->
+              <button 
+                @click="clearAllFilters"
+                class="text-xs bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-xl transition-colors cursor-pointer font-normal"
+              >
+                Clean all
+              </button>
             </div>
 
             <div class="p-6 space-y-6">
               
+              <!-- Study Programme Filter -->
               <div>
                 <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider mb-2">
                   Study Programme
@@ -206,6 +336,31 @@ const openDetails = (id) => {
                   @toggle="isProgrammeOpen = !isProgrammeOpen"
                   @select="isProgrammeOpen = false"
                 />
+              </div>
+
+              <!-- Cities Filter (Checkboxes) -->
+              <div class="pt-4 border-t border-white/50">
+                <div class="flex justify-between items-center mb-3">
+                  <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider">
+                    Cities
+                  </label>
+                  <span class="text-[10px] text-gray-500 bg-white/60 px-2 py-0.5 rounded-md">Multiple</span>
+                </div>
+                <div class="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
+                  <label 
+                    v-for="city in availableCities" 
+                    :key="city"
+                    class="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#102a43]"
+                  >
+                    <input 
+                      type="checkbox" 
+                      :value="city"
+                      v-model="selectedCities"
+                      class="w-4 h-4 rounded border-gray-300 text-[#102a43] focus:ring-0 cursor-pointer"
+                    >
+                    <span class="text-xs">{{ city }}</span>
+                  </label>
+                </div>
               </div>
 
               <!-- Internship Fields Checkboxes (Optional) -->
@@ -274,13 +429,37 @@ const openDetails = (id) => {
         <!-- Right Content Area -->
         <div class="lg:col-span-3 space-y-6">
           
-          <h1 class="text-3xl font-extrabold text-[#102a43]">
-            {{ filteredCompanies.length }} companies found
-          </h1>
+          <!-- Top bar with counter, search input, and Download PDF button -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#e4eff7]/80 backdrop-blur-md p-5 rounded-[28px] border border-white/60 shadow-sm">
+            <h1 class="text-2xl font-extrabold text-[#102a43]">
+              {{ filteredCompanies.length }} companies found
+            </h1>
 
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+              <!-- Search by name input -->
+              <div class="relative w-full sm:w-64">
+                <input 
+                  type="text" 
+                  v-model="searchQuery"
+                  placeholder="Search company by name..."
+                  class="w-full px-4 py-2.5 bg-white/70 border border-white rounded-2xl text-sm text-[#102a43] placeholder-[#627d98] focus:outline-none focus:ring-2 focus:ring-[#102a43]/30 shadow-sm"
+                />
+              </div>
+
+              <!-- Download PDF Button -->
+              <button 
+                @click="downloadPDF"
+                class="w-full sm:w-auto px-4 py-2.5 bg-[#102a43] hover:bg-[#1a3a5f] text-white font-semibold text-sm rounded-2xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <span>Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Companies Grid (8 items per page) -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div 
-              v-for="company in filteredCompanies" 
+              v-for="company in paginatedCompanies" 
               :key="company.id"
               class="bg-[#e4eff7]/80 backdrop-blur-md p-6 rounded-[28px] border border-white/60 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
             >
@@ -289,6 +468,11 @@ const openDetails = (id) => {
                   <h2 class="text-xl font-bold text-[#102a43]">{{ company.brandName }}</h2>
                   <p class="text-sm text-[#627d98]">📍 {{ company.city }}</p>
                 </div>
+
+                <!-- Full Unclipped Company Description -->
+                <p v-if="company.description" class="text-xs text-[#627d98] mb-4">
+                  {{ company.description }}
+                </p>
                 
                 <div class="flex flex-wrap gap-2 mb-6">
                   <span 
@@ -324,8 +508,40 @@ const openDetails = (id) => {
             </div>
           </div>
 
-          <div v-if="filteredCompanies.length === 0" class="bg-white/50 backdrop-blur-md p-10 rounded-[28px] text-center text-[#102a43] font-semibold">
-            No companies found matching your selected filters.
+          <!-- Empty State -->
+          <div v-if="filteredCompanies.length === 0" class="bg-white/50 backdrop-blur-md p-10 rounded-[28px] text-center text-[#102a43] font-semibold shadow-sm">
+            No companies found matching your selected filters or search query.
+          </div>
+
+          <!-- Pagination (1, 2, 3...) -->
+          <div v-if="totalPages > 1" class="flex justify-center items-center space-x-2 pt-4">
+            <button 
+              @click="currentPage--" 
+              :disabled="currentPage === 1"
+              class="px-4 py-2 rounded-2xl bg-white/60 border border-white/80 text-sm font-semibold text-[#102a43] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white transition-colors shadow-sm cursor-pointer"
+            >
+              Previous
+            </button>
+
+            <button 
+              v-for="page in totalPages" 
+              :key="page"
+              @click="currentPage = page"
+              class="w-10 h-10 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
+              :class="currentPage === page 
+                ? 'bg-[#102a43] text-white shadow-md' 
+                : 'bg-white/60 border border-white/80 text-[#102a43] hover:bg-white'"
+            >
+              {{ page }}
+            </button>
+
+            <button 
+              @click="currentPage++" 
+              :disabled="currentPage === totalPages"
+              class="px-4 py-2 rounded-2xl bg-white/60 border border-white/80 text-sm font-semibold text-[#102a43] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white transition-colors shadow-sm cursor-pointer"
+            >
+              Next
+            </button>
           </div>
 
         </div>
