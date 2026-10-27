@@ -24,7 +24,7 @@
   --color-text-accent: #ffffff;
 
   /* New design palette */
-  --color-sky: #a3d5ed;
+  --color-sky: #91d5f3;
   --color-paper: #faf7ef;
   --color-ink: #111820;
   --color-brand-red: #d9001b;
@@ -36,21 +36,12 @@ body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-sans);
-  background-color: var(--color-base);
 
-  /* Soft background gradients with opacity */
-  background-image: 
-    /* Light top-left glow */
-    radial-gradient(circle at 20% 20%, rgba(200, 228, 245, 0.8) 0%, transparent 60%),
-    /* Soft medium-blue shadow on the right (without sharp dark core) */
-    radial-gradient(circle at 70% 70%, rgba(98, 125, 152, 0.45) 0%, transparent 70%),
-    /* Subtle bottom-left glow */
-    radial-gradient(circle at 10% 80%, rgba(120, 170, 205, 0.5) 0%, transparent 50%);
-
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
+  /* Clear sky-blue background matching the selected design */
+  background-color: var(--color-sky);
+  background-image: none;
 }
+
 /* #app {
   max-width: 1280px;
   margin: 0 auto;

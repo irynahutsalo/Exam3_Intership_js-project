@@ -1,58 +1,83 @@
 <template>
   <div class="relative w-full">
-    <!-- Select trigger button -->
-    <button 
+    <!-- Button that opens and closes the dropdown -->
+    <button
       @click="$emit('toggle')"
       type="button"
-      class="w-full h-[52px] px-5 bg-white/60 border border-white/80 rounded-2xl flex items-center justify-between text-left text-[15px] focus:outline-none transition-all cursor-pointer shadow-sm"
+      :aria-expanded="isOpen"
+      class="w-full min-h-[52px] px-4 py-3 bg-white border rounded-md flex items-center justify-between gap-3 text-left text-[15px] cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+      :class="isOpen ? 'border-brand-red' : 'border-ink/30 hover:border-ink/60'"
     >
-      <span class="text-[#102a43] font-medium truncate">
+      <span class="min-w-0 font-medium" :class="modelValue ? 'text-ink' : 'text-ink/60'">
         {{ modelValue || placeholder }}
       </span>
 
-      <!-- Arrow indicator -->
-      <svg 
-        class="w-4 h-4 text-[#102a43]/50 transition-transform duration-200 shrink-0 ml-2" 
-        :class="{ 'rotate-180': isOpen }"
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24" 
+      <!-- Arrow rotates when the dropdown is open -->
+      <svg
+        class="w-4 h-4 shrink-0 transition-transform duration-200"
+        :class="[isOpen ? 'text-brand-red' : 'text-ink/60', { 'rotate-180': isOpen }]"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
         stroke="currentColor"
+        aria-hidden="true"
       >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
       </svg>
     </button>
 
-    <!-- Dropdown list with clean scroll container -->
-    <div 
-      v-if="isOpen" 
-      class="absolute left-0 right-0 z-50 mt-2 bg-white/95 border border-white/90 rounded-2xl shadow-xl backdrop-blur-md py-1 max-h-[220px] overflow-y-auto"
+    <!-- Dropdown options -->
+    <div
+      v-if="isOpen"
+      class="absolute left-0 right-0 z-50 mt-2 max-h-[220px] overflow-y-auto bg-white border border-ink/25 rounded-md shadow-lg p-1"
     >
-      <div 
-        v-for="option in options" 
+      <button
+        v-for="option in options"
         :key="option"
         @click="selectOption(option)"
-        class="px-5 py-3 text-[14px] text-[#102a43] font-medium hover:bg-[#102a43] hover:text-white cursor-pointer transition-colors"
-        :class="{ 'bg-[#102a43] text-white': modelValue === option }"
+        type="button"
+        class="w-full px-3 py-3 rounded-sm text-left text-[15px] font-medium flex items-center justify-between gap-3 cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-red"
+        :class="
+          modelValue === option ? 'bg-brand-red/10 text-brand-red' : 'text-ink hover:bg-paper'
+        "
       >
-        {{ option }}
-      </div>
+        <span>{{ option }}</span>
+
+        <!-- Checkmark identifies the selected option -->
+        <svg
+          v-if="modelValue === option"
+          class="w-4 h-4 shrink-0"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m5 12 4 4L19 6"
+          />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 defineProps({
-  modelValue: String,   
-  placeholder: String,  
-  options: Array,       
-  isOpen: Boolean       
+  modelValue: String,
+  placeholder: String,
+  options: Array,
+  isOpen: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue', 'toggle', 'select'])
 
+// Update the value and notify the parent component.
 const selectOption = (option) => {
-  emit('update:modelValue', option) 
+  emit('update:modelValue', option)
   emit('select', option)
 }
 </script>

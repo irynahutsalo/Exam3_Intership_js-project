@@ -6,7 +6,7 @@
     <!-- Step 1: Institution selection -->
     <div class="mb-6">
       <label class="block text-[16px] font-bold text-text-main mb-4">
-        1. Where do you study?
+        1. Where do you study? *
       </label>
       <CustomSelect
         v-model="selectedInstitution"
@@ -20,7 +20,9 @@
 
     <!-- Step 2: Study programme selection (Visible after Step 1) -->
     <div v-if="selectedInstitution" class="mb-6 pt-6 border-t border-white/40">
-      <label class="block text-[16px] font-bold text-text-main mb-4"> 2. What do you study? </label>
+      <label class="block text-[16px] font-bold text-text-main mb-4">
+        2. What do you study? *
+      </label>
       <CustomSelect
         v-model="selectedProgramme"
         placeholder="Select your study programme"
@@ -148,17 +150,17 @@
       </div>
     </div>
 
-    <!-- Submit Button -->
+    <!-- Search button -->
     <button
       @click="handleSubmit"
       type="button"
-      class="w-full h-[52px] mt-4 rounded-2xl font-semibold text-[15px] transition-all duration-300 shadow-sm"
+      :disabled="!isFormValid"
+      class="w-full min-h-[52px] mt-4 px-6 py-3 rounded-md text-base font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
       :class="
         isFormValid
-          ? 'bg-navy-dark text-white hover:bg-[#1f3f5b] cursor-pointer shadow-md'
-          : 'bg-navy-dark/40 text-white/50 cursor-not-allowed'
+          ? 'bg-brand-red text-white hover:bg-brand-red-hover cursor-pointer'
+          : 'bg-ink/10 text-ink/45 cursor-not-allowed'
       "
-      :disabled="!isFormValid"
     >
       Find companies
     </button>
