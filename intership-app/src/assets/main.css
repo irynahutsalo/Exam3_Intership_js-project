@@ -1,17 +1,20 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+@import 'tailwindcss';
 @theme {
-  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Main font for navigation, forms and buttons */
+  --font-sans: 'DM Sans', Arial, sans-serif;
+  /* Display font for the main heading */
+  --font-display: 'Fraunces', Georgia, serif;
   --color-base: #a8c4d8;
   --color-soft-blue: #78aacd;
   --color-light-sky: #c8e4f5;
   --color-steel-blue: #627d98;
-
   --color-navy-dark: #102a43;
-  --color-accent: #D9534F;
+  --color-accent: #d9534f;
+  /* Accent color for links, buttons, and other interactive elements */
 
   --color-text-muted: #8faabb;
   --color-muted: #8faabb;
-
   --width-full: 100%;
   --grid-gap: 10px;
   --width-content: 1280px;
@@ -19,25 +22,31 @@
   /* Typography text colors */
   --color-text-main: #102a43;
   --color-text-accent: #ffffff;
+
+  /* New design palette */
+  --color-sky: #a3d5ed;
+  --color-paper: #faf7ef;
+  --color-ink: #111820;
+  --color-brand-red: #d9001b;
+  --color-brand-red-hover: #b80017;
+  --color-border: #d7d3ca;
 }
 
 body {
   margin: 0;
-  min-height: 150vh;
+  min-height: 100vh;
   font-family: var(--font-sans);
   background-color: var(--color-base);
-  
+
   /* Soft background gradients with opacity */
   background-image: 
     /* Light top-left glow */
     radial-gradient(circle at 20% 20%, rgba(200, 228, 245, 0.8) 0%, transparent 60%),
-    
     /* Soft medium-blue shadow on the right (without sharp dark core) */
     radial-gradient(circle at 70% 70%, rgba(98, 125, 152, 0.45) 0%, transparent 70%),
-    
     /* Subtle bottom-left glow */
     radial-gradient(circle at 10% 80%, rgba(120, 170, 205, 0.5) 0%, transparent 50%);
-    
+
   background-attachment: fixed;
   background-repeat: no-repeat;
   background-size: cover;

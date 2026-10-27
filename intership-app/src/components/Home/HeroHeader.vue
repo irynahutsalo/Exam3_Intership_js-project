@@ -1,16 +1,20 @@
 <template>
-  <section class="text-center pt-[80px] pb-8 max-w-[var(--width-content)] mx-auto px-6">
-    <!-- Main Title: 62px -->
-    <h1 class="text-[62px] font-bold text-text-accent tracking-tight leading-tight mb-3 uppercase">
-      Find your <span class="text-accent">intern</span>ship
-    </h1>
-    
-    <!-- Subtitle Description: 18px -->
-    <p class="text-[18px] text-text-accent/80 font-normal leading-relaxed max-w-2xl mx-auto">
-      Find companies that match your education, interests and preferred language.
-    </p>
+  <section
+    class="max-w-[var(--width-content)] mx-auto px-4 sm:px-6 pt-10 sm:pt-14 lg:pt-16 pb-7 sm:pb-9"
+  >
+    <div class="max-w-[760px] mx-auto">
+      <!-- Main heading -->
+      <h1
+        class="font-display text-[48px] sm:text-[64px] lg:text-[80px] font-semibold text-ink tracking-tight leading-[1.05]"
+      >
+        <span class="block">Find your</span>
+        <span class="block italic text-brand-red">internship.</span>
+      </h1>
+
+      <!-- Supporting text -->
+      <p class="mt-5 max-w-[480px] text-base sm:text-lg text-ink/75 leading-relaxed">
+        Find companies that match your education, interests and preferred language.
+      </p>
+    </div>
   </section>
 </template>
-
-<script setup>
-</script>
