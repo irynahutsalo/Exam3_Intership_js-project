@@ -172,6 +172,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomSelect from './CustomSelect.vue'
 import companiesData from '@/data/companies.json'
+import { getAvailableFields } from '@/utils/internshipFields'
 
 const router = useRouter()
 const activeDropdown = ref(null)
@@ -265,9 +266,11 @@ const defaultFields = [
 
 const languages = ref(['English', 'Danish'])
 
+// Build the field list from companies in the selected programme.
 const availableInternshipFields = computed(() => {
   if (!selectedProgramme.value) return []
-  return programFieldsMap[selectedProgramme.value] || defaultFields
+
+  return getAvailableFields(companiesData, selectedProgramme.value)
 })
 
 const isAllFieldsSelected = computed(() => {
