@@ -86,19 +86,6 @@ const downloadPDF = () => window.print()
   <main
     class="company-details relative isolate min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-0"
   >
-    <!-- Decorative image -->
-    <div
-      aria-hidden="true"
-      class="decoration pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[220px] sm:h-[290px] lg:h-[350px] overflow-hidden"
-    >
-      <img
-        src="/images/man-roof.png"
-        alt=""
-        draggable="false"
-        class="absolute bottom-0 left-0 w-[380px] sm:w-[540px] lg:w-[680px] max-w-full h-auto -scale-x-100"
-      />
-    </div>
-
     <div class="relative z-10 max-w-[var(--width-content)] mx-auto">
       <!-- Navigation and print -->
       <div class="page-actions flex flex-wrap items-center justify-between gap-3 mb-8">
@@ -121,13 +108,8 @@ const downloadPDF = () => window.print()
       </div>
 
       <!-- Page title -->
-      <div class="relative mb-8 sm:mb-10">
-        <h1
-          class="font-display text-[42px] sm:text-[60px] lg:text-[76px] font-semibold tracking-tight leading-[1.08] md:pr-[260px]"
-        >
-          Company
-          <span class="text-brand-red italic">details.</span>
-        </h1>
+      <div class="relative mb-3">
+        <p class="text-[14px] sm:text-[16px] font-medium text-ink/60">Company details</p>
 
         <img
           src="/images/paper-plane-trail.svg"
@@ -139,14 +121,14 @@ const downloadPDF = () => window.print()
       </div>
 
       <template v-if="company">
-        <div class="mb-6">
-          <h2
-            class="font-sans text-[28px] sm:text-[36px] font-semibold tracking-tight leading-tight break-words"
+        <div class="mb-7 sm:mb-9 md:pr-[280px] lg:pr-[360px]">
+          <h1
+            class="font-sans text-[36px] sm:text-[48px] lg:text-[56px] font-semibold text-ink tracking-tight leading-[1.1] break-words"
           >
             {{ company.brandName }}
-          </h2>
+          </h1>
 
-          <p v-if="company.city" class="mt-3 text-base text-ink/70">
+          <p v-if="company.city" class="mt-3 text-[16px] sm:text-[18px] text-ink/65">
             {{ company.city }}
           </p>
         </div>
@@ -301,16 +283,25 @@ const downloadPDF = () => window.print()
         <p class="text-ink/70">Return to the company list and select another company.</p>
       </section>
     </div>
-    <!-- Decorative image below the company information -->
+    <!-- Decorative images below the company information -->
     <div
       aria-hidden="true"
-      class="decoration pointer-events-none relative z-0 mt-8 sm:mt-10 -mx-4 sm:-mx-6"
+      class="decoration pointer-events-none relative z-0 -mt-[10px] -mx-4 sm:-mx-6"
     >
+      <!-- Building and sun on the left -->
+      <img
+        src="/images/building-sun.png"
+        alt=""
+        draggable="false"
+        class="absolute bottom-0 left-0 w-[180px] sm:w-[320px] lg:w-[460px] max-w-[45%] h-auto"
+      />
+
+      <!-- Man on the right -->
       <img
         src="/images/man-roof.png"
         alt=""
         draggable="false"
-        class="block w-[380px] sm:w-[540px] lg:w-[680px] max-w-full h-auto -scale-x-100"
+        class="block ml-auto w-[380px] sm:w-[540px] lg:w-[680px] max-w-[55%] h-auto"
       />
     </div>
   </main>
