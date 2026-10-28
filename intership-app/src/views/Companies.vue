@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute, RouterLink } from 'vue-router'
 import CustomSelect from '@/components/Home/CustomSelect.vue'
 import companiesData from '@/data/companies.json'
 import jsPDF from 'jspdf'
 import { getCompanyFields, getAvailableFields } from '@/utils/internshipFields'
 
 const router = useRouter()
+const route = useRoute()
 const companies = ref([])
 
 const selectedProgramme = ref('All programmes')
@@ -166,7 +167,32 @@ const removeFilter = (filter) => {
   }
 }
 
-onMounted(() => {
+const listStateReady = ref(false)
+
+const listQuery = computed(() => ({
+  ...route.query,
+  filters: JSON.stringify({
+    programme: selectedProgramme.value,
+    cities: selectedCities.value,
+    fields: selectedFields.value,
+    english: languageEnglish.value,
+    danish: languageDanish.value,
+    search: searchQuery.value,
+    page: currentPage.value,
+  }),
+}))
+
+watch(
+  listQuery,
+  (query) => {
+    if (listStateReady.value && route.query.filters !== query.filters) {
+      router.replace({ path: route.path, query })
+    }
+  },
+  { flush: 'post' },
+)
+
+onMounted(async () => {
   // Scroll to the top of the page smoothly on mount
   window.scrollTo({ top: 0, behavior: 'smooth' })
 
@@ -232,6 +258,44 @@ onMounted(() => {
       console.error('Error loading filters from storage', e)
     }
   }
+  // Restore the list state from the URL.
+  let restoredPage = 1
+
+  if (typeof route.query.filters === 'string') {
+    try {
+      const state = JSON.parse(route.query.filters)
+
+      selectedProgramme.value =
+        typeof state.programme === 'string' ? state.programme : 'All programmes'
+
+      selectedCities.value = Array.isArray(state.cities)
+        ? state.cities.filter((value) => typeof value === 'string')
+        : []
+
+      selectedFields.value = Array.isArray(state.fields)
+        ? state.fields.filter((value) => typeof value === 'string')
+        : []
+
+      languageEnglish.value = state.english === true
+      languageDanish.value = state.danish === true
+      searchQuery.value = typeof state.search === 'string' ? state.search : ''
+
+      restoredPage = Number.isInteger(state.page) ? state.page : 1
+    } catch {
+      console.warn('Could not restore company filters from the URL.')
+    }
+  }
+
+  // Let the existing filter watcher reset pagination before restoring the page.
+  await nextTick()
+
+  currentPage.value = Math.min(Math.max(1, restoredPage), totalPages.value)
+  listStateReady.value = true
+
+  await router.replace({
+    path: route.path,
+    query: listQuery.value,
+  })
 })
 
 // Function to clear all filters and search state
@@ -965,7 +1029,7 @@ const downloadPDF = () => {
                 <!-- Company details link -->
                 <div class="border-t border-ink/10 pt-3">
                   <RouterLink
-                    :to="`/company/${company.id}`"
+                    :to="{ path: `/company/${company.id}`, query: listQuery }"
                     :aria-label="`View company: ${company.brandName}`"
                     class="inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
                   >

@@ -1,225 +1,352 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import companiesData from '@/data/companies.json';
+import { computed } from 'vue'
+import { useRoute, RouterLink } from 'vue-router'
+import companiesData from '@/data/companies.json'
+import { getCompanyFields } from '@/utils/internshipFields'
 
-const route = useRoute();
-const router = useRouter();
-const company = ref(null);
+const route = useRoute()
 
-// Lifecycle hook: runs when the component is mounted to load and filter company details
-onMounted(() => {
-    // Retrieve saved list from localStorage or fallback to imported JSON file
-    const saved = localStorage.getItem('companies_list');
-    const rawData = saved ? JSON.parse(saved) : companiesData;
+const splitValues = (value) => {
+  const values = Array.isArray(value) ? value : [value || '']
 
-    // Map and normalize raw data fields for UI presentation
-    const list = rawData.map(item => ({
-        id: item.companyId,
-        brandName: item.brandName || item['name (source / legal)'],
-        legalName: item['name (source / legal)'],
-        city: item.city,
-        sourceProgrammes: item.sourceProgrammes ? item.sourceProgrammes.split(',').map(s => s.trim()) : [],
-        website: item.website,
-        careerUrl: item.careerUrl,
-        email: item.email,
-        phone: item.phone,
-        websiteLanguages: item.websiteLanguages ? item.websiteLanguages.split(';') : ['DK', 'EN'],
-        description: item.description,
-        address: item.address
-    }));
+  return values
+    .flatMap((item) => String(item).split(/[;,]/))
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
-    // Find the specific company based on the ID parameter from the route
-    company.value = list.find(c => String(c.id) === String(route.params.id));
-});
+const safeWebsite = (value) => {
+  const text = String(value || '').trim()
+  if (!text) return ''
 
-// Trigger browser native print dialog, which allows saving the page as a PDF cleanly
-const downloadPDF = () => {
-    window.print();
-};
+  try {
+    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`)
+
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : ''
+  } catch {
+    return ''
+  }
+}
+
+const programmeLabels = {
+  datamatiker: 'Datamatiker / Computer Science',
+  multimediedesigner: 'Multimedia Design',
+}
+
+const languageLabels = {
+  en: 'English',
+  english: 'English',
+  dk: 'Danish',
+  da: 'Danish',
+  danish: 'Danish',
+}
+
+const company = computed(() => {
+  let data = companiesData
+
+  try {
+    const saved = JSON.parse(localStorage.getItem('companies_list'))
+    if (Array.isArray(saved)) data = saved
+  } catch {
+    // Use the imported data if the saved list cannot be read.
+  }
+
+  const item = data.find((entry) => String(entry.companyId) === String(route.params.id))
+
+  if (!item) return null
+
+  return {
+    brandName: item.brandName || item['name (source / legal)'],
+    city: String(item.city || '').trim(),
+    description: String(item.description || '').trim(),
+    address: String(item.address || '').trim(),
+    email: String(item.email || '').trim(),
+    phone: String(item.phone || '').trim(),
+    website: safeWebsite(item.website),
+    careerUrl: safeWebsite(item.careerUrl),
+    programmes: splitValues(item.sourceProgrammes).map(
+      (value) => programmeLabels[value.toLowerCase()] || value,
+    ),
+    languages: splitValues(item.websiteLanguages).map(
+      (value) => languageLabels[value.toLowerCase()] || value,
+    ),
+    fields: getCompanyFields(item),
+  }
+})
+
+const backToCompanies = computed(() => ({
+  path: '/companies',
+  query: route.query,
+}))
+
+const downloadPDF = () => window.print()
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#a8c4d8] p-10">
-    <div class="max-w-6xl mx-auto">
-      
-      <!-- Top Navigation & PDF Export Action Bar -->
-      <div class="flex justify-between items-center mb-6">
-        <button @click="router.back()" class="text-[#102a43] font-semibold hover:underline cursor-pointer">
-          &larr; Back to list
-        </button>
-        <button 
-          @click="downloadPDF"
-          class="bg-[#102a43] text-white px-5 py-2.5 rounded-2xl font-semibold hover:bg-[#102a43]/90 transition-colors shadow-sm cursor-pointer"
-        >
-          Download PDF 📄
-        </button>
-      </div>
-
-      <!-- Main Content Container for Details and Print Preview -->
-      <div v-if="company" class="space-y-6">
-        
-        <!-- Dark Hero Banner Header -->
-        <div class="bg-[#102a43] text-white p-8 rounded-[28px] shadow-sm flex justify-between items-center">
-          <div>
-            <span class="inline-block px-3 py-1 bg-emerald-800/60 text-emerald-200 text-xs rounded-full font-medium mb-3">
-              Currently Recruiting
-            </span>
-            <h1 class="text-4xl font-bold mb-2">{{ company.brandName }}</h1>
-            <p class="text-[#8faabb] text-sm">📍 {{ company.address || company.city }}</p>
-          </div>
-          <div>
-            <a 
-              v-if="company.website" 
-              :href="company.website" 
-              target="_blank" 
-              class="px-4 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-sm font-semibold transition-colors border border-white/20"
-            >
-              🌐 Website
-            </a>
-          </div>
-        </div>
-
-        <!-- Two-Column Layout Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          <!-- Left Column: Main Description and Categories -->
-          <div class="lg:col-span-2 space-y-6">
-            
-            <!-- About Section Card -->
-            <div class="bg-white/60 backdrop-blur-md p-8 rounded-[24px] border border-white/80 shadow-sm">
-              <h2 class="text-xl font-bold text-[#102a43] mb-4">About {{ company.brandName }}</h2>
-              <p class="text-[#102a43]/80 leading-relaxed">{{ company.description || 'Description is not available in the database.' }}</p>
-            </div>
-
-            <!-- Internship Areas Offered Card -->
-            <div class="bg-white/60 backdrop-blur-md p-8 rounded-[24px] border border-white/80 shadow-sm">
-              <h2 class="text-xl font-bold text-[#102a43] mb-4">Internship Areas Offered</h2>
-              <div class="flex flex-wrap gap-2">
-                <span 
-                  v-for="(prog, idx) in company.sourceProgrammes" 
-                  :key="idx"
-                  class="bg-[#fadadd] text-[#9b2c2c] text-sm px-4 py-2 rounded-xl font-medium"
-                >
-                  {{ prog }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Working Languages Card -->
-            <div class="bg-white/60 backdrop-blur-md p-8 rounded-[24px] border border-white/80 shadow-sm">
-              <h2 class="text-xl font-bold text-[#102a43] mb-4">Working Languages</h2>
-              <div class="flex gap-3">
-                <span 
-                  v-for="lang in company.websiteLanguages" 
-                  :key="lang"
-                  class="bg-amber-100 text-amber-900 px-4 py-2 rounded-xl text-sm font-bold"
-                >
-                  {{ lang.trim() }}
-                </span>
-              </div>
-            </div>
-
-          </div>
-
-          <!-- Right Column: Contact Details and Apply Actions -->
-          <div class="space-y-6">
-            
-            <!-- Contact Information Box -->
-            <div class="bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/80 shadow-sm">
-              <h3 class="text-lg font-bold text-[#102a43] mb-4">Contact Information</h3>
-              
-              <div class="space-y-4 text-sm text-[#102a43]">
-                <div v-if="company.email">
-                  <p class="text-[#627d98] text-xs">Email</p>
-                  <p class="font-semibold">{{ company.email }}</p>
-                </div>
-                <div v-if="company.phone">
-                  <p class="text-[#627d98] text-xs">Phone</p>
-                  <p class="font-semibold">{{ company.phone }}</p>
-                </div>
-              </div>
-
-              <a 
-                v-if="company.careerUrl || company.website"
-                :href="company.careerUrl || company.website" 
-                target="_blank"
-                class="mt-6 block w-full text-center bg-[#D9534F] text-white py-3 rounded-xl font-semibold hover:bg-[#c9302c] transition-colors shadow-sm"
-              >
-                Apply on Website
-              </a>
-            </div>
-
-            <!-- How to Apply Guide Box -->
-            <div class="bg-[#102a43] text-white p-6 rounded-[24px] shadow-sm">
-              <h3 class="text-lg font-bold mb-2">How to Apply</h3>
-              <p class="text-[#8faabb] text-sm leading-relaxed mb-4">
-                Apply through the official career portal. Complete their application form and upload your CV and cover letter.
-              </p>
-              <a 
-                v-if="company.careerUrl"
-                :href="company.careerUrl" 
-                target="_blank" 
-                class="inline-block text-[#78aacd] hover:text-white font-medium text-sm"
-              >
-                Go to Portal &rarr;
-              </a>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Fallback state if company ID is invalid or missing -->
-      <div v-else class="text-center py-20 text-[#102a43] font-semibold">
-        Company not found.
-      </div>
-
+  <main
+    class="company-details relative isolate min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-0"
+  >
+    <!-- Decorative image -->
+    <div
+      aria-hidden="true"
+      class="decoration pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[220px] sm:h-[290px] lg:h-[350px] overflow-hidden"
+    >
+      <img
+        src="/images/man-roof.png"
+        alt=""
+        draggable="false"
+        class="absolute bottom-0 left-0 w-[380px] sm:w-[540px] lg:w-[680px] max-w-full h-auto -scale-x-100"
+      />
     </div>
-  </div>
+
+    <div class="relative z-10 max-w-[var(--width-content)] mx-auto">
+      <!-- Navigation and print -->
+      <div class="page-actions flex flex-wrap items-center justify-between gap-3 mb-8">
+        <RouterLink
+          :to="backToCompanies"
+          class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-red hover:underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-brand-red"
+        >
+          <span aria-hidden="true">←</span>
+          Back to companies
+        </RouterLink>
+
+        <button
+          v-if="company"
+          type="button"
+          @click="downloadPDF"
+          class="min-h-11 px-3 text-sm font-semibold text-brand-red hover:underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-brand-red"
+        >
+          Download PDF ↓
+        </button>
+      </div>
+
+      <!-- Page title -->
+      <div class="relative mb-8 sm:mb-10">
+        <h1
+          class="font-display text-[42px] sm:text-[60px] lg:text-[76px] font-semibold tracking-tight leading-[1.08] md:pr-[260px]"
+        >
+          Company
+          <span class="text-brand-red italic">details.</span>
+        </h1>
+
+        <img
+          src="/images/paper-plane-trail.svg"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          class="decoration pointer-events-none absolute right-0 top-0 hidden md:block w-[260px] lg:w-[340px] h-auto -scale-x-100"
+        />
+      </div>
+
+      <template v-if="company">
+        <div class="mb-6">
+          <h2
+            class="font-sans text-[28px] sm:text-[36px] font-semibold tracking-tight leading-tight break-words"
+          >
+            {{ company.brandName }}
+          </h2>
+
+          <p v-if="company.city" class="mt-3 text-base text-ink/70">
+            {{ company.city }}
+          </p>
+        </div>
+
+        <div class="details-grid grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <!-- Company information -->
+          <section
+            aria-label="Company information"
+            class="details-panel lg:col-span-2 bg-paper border border-ink/10 rounded-md p-6 sm:p-8"
+          >
+            <div class="pb-6">
+              <h3 class="text-xl font-semibold mb-3">About the company</h3>
+
+              <p class="text-[16px] leading-relaxed text-ink/80 whitespace-pre-line">
+                {{ company.description || 'Description not provided.' }}
+              </p>
+            </div>
+
+            <div class="border-t border-ink/15 py-6">
+              <h3 class="text-xl font-semibold mb-4">Study programme</h3>
+
+              <div v-if="company.programmes.length" class="flex flex-wrap gap-2">
+                <span
+                  v-for="programme in company.programmes"
+                  :key="programme"
+                  class="bg-sky/35 rounded-md px-3 py-2 text-sm"
+                >
+                  {{ programme }}
+                </span>
+              </div>
+
+              <p v-else class="text-ink/60">Not provided</p>
+            </div>
+
+            <div class="border-t border-ink/15 py-6">
+              <h3 class="text-xl font-semibold mb-4">Internship fields</h3>
+
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="field in company.fields"
+                  :key="field"
+                  class="border border-ink/25 rounded-md px-3 py-2 text-sm"
+                >
+                  {{ field === 'Other' ? 'Other / Not specified' : field }}
+                </span>
+              </div>
+
+              <p class="mt-3 text-sm leading-relaxed text-ink/60">
+                Contact the company to confirm available opportunities.
+              </p>
+            </div>
+
+            <div class="border-t border-ink/15 pt-6">
+              <h3 class="text-xl font-semibold mb-3">Website language</h3>
+              <p class="text-ink/80">
+                {{ company.languages.join(' · ') || 'Not provided' }}
+              </p>
+            </div>
+          </section>
+
+          <!-- Contact information -->
+          <aside
+            aria-label="Company contact details"
+            class="details-panel bg-paper border border-ink/10 rounded-md p-6 sm:p-8"
+          >
+            <h3 class="text-xl font-semibold mb-6">Get in touch</h3>
+
+            <dl class="space-y-5 text-[15px]">
+              <div>
+                <dt class="text-sm text-ink/60 mb-1">Website</dt>
+                <dd class="break-words">
+                  <a
+                    v-if="company.website"
+                    :href="company.website"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-brand-red underline underline-offset-4"
+                  >
+                    {{ company.website }}
+                  </a>
+                  <span v-else class="text-ink/60">Not provided</span>
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-sm text-ink/60 mb-1">Email</dt>
+                <dd class="break-words">
+                  <a
+                    v-if="company.email"
+                    :href="`mailto:${company.email}`"
+                    class="text-brand-red underline underline-offset-4"
+                  >
+                    {{ company.email }}
+                  </a>
+                  <span v-else class="text-ink/60">Not provided</span>
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-sm text-ink/60 mb-1">Phone</dt>
+                <dd>
+                  <a
+                    v-if="company.phone"
+                    :href="`tel:${company.phone.replace(/[^\d+]/g, '')}`"
+                    class="hover:text-brand-red hover:underline underline-offset-4"
+                  >
+                    {{ company.phone }}
+                  </a>
+                  <span v-else class="text-ink/60">Not provided</span>
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-sm text-ink/60 mb-1">Address</dt>
+                <dd class="leading-relaxed">
+                  {{ company.address || 'Not provided' }}
+                </dd>
+              </div>
+            </dl>
+
+            <div class="mt-7 space-y-3">
+              <a
+                v-if="company.website"
+                :href="company.website"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex min-h-[48px] items-center justify-center gap-2 rounded-md bg-brand-red px-4 py-3 text-white font-semibold hover:bg-brand-red-hover transition-colors"
+              >
+                Visit website <span aria-hidden="true">↗</span>
+              </a>
+
+              <a
+                v-if="company.careerUrl"
+                :href="company.careerUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex min-h-[48px] items-center justify-center gap-2 rounded-md border border-brand-red px-4 py-3 text-brand-red font-semibold hover:bg-brand-red/5 transition-colors"
+              >
+                Careers <span aria-hidden="true">↗</span>
+              </a>
+            </div>
+
+            <p class="mt-4 text-sm leading-relaxed text-ink/60">
+              Check the company website for current internship opportunities.
+            </p>
+          </aside>
+        </div>
+      </template>
+
+      <section v-else class="bg-paper rounded-md border border-ink/10 p-8">
+        <h2 class="text-2xl font-semibold mb-3">Company not found</h2>
+        <p class="text-ink/70">Return to the company list and select another company.</p>
+      </section>
+    </div>
+    <!-- Decorative image below the company information -->
+    <div
+      aria-hidden="true"
+      class="decoration pointer-events-none relative z-0 mt-8 sm:mt-10 -mx-4 sm:-mx-6"
+    >
+      <img
+        src="/images/man-roof.png"
+        alt=""
+        draggable="false"
+        class="block w-[380px] sm:w-[540px] lg:w-[680px] max-w-full h-auto -scale-x-100"
+      />
+    </div>
+  </main>
 </template>
 
-<style>
-/* Print media styles to match exact website design and colors */
+<style scoped>
 @media print {
-  /* Hide navigation buttons and header elements */
-  button, nav, header {
+  .page-actions,
+  .decoration {
     display: none !important;
   }
 
-  /* Force background colors and remove glassmorphism blur for stable PDF rendering */
-  body {
-    background-color: #a8c4d8 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* Keep container layout solid */
-  .max-w-6xl {
-    max-width: 100% !important;
+  .company-details {
+    background: white !important;
     padding: 0 !important;
+    min-height: auto !important;
   }
 
-  /* Restore solid background for cards instead of translucent glass */
-  .bg-white\/60 {
-    background-color: #ffffff !important;
-    border-color: #cbd5e1 !important;
+  .details-grid {
+    display: block;
   }
 
-  /* Ensure dark header banner retains its branding */
-  .bg-\[\#102a43\] {
-    background-color: #102a43 !important;
-    color: #ffffff !important;
-    -webkit-print-color-adjust: exact;
+  .details-panel {
+    margin-bottom: 16px;
+    background: #faf7ef !important;
     print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
-  /* Keep badges colored properly */
-  .bg-\[\#fadadd\] {
-    background-color: #fadadd !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  dl > div {
+    break-inside: avoid;
   }
 }
 </style>
