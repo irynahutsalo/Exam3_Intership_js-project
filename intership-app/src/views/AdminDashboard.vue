@@ -1,317 +1,357 @@
 <template>
-  <div class="min-h-screen bg-[#a8c4d8] flex relative">
-    
-    <!-- Left Sidebar Navigation -->
-    <aside class="w-64 bg-[#102a43] text-white flex flex-col justify-between p-6 shrink-0">
-      <div>
-        <div class="flex items-center gap-3 mb-10">
-          <div class="w-9 h-9 bg-[#e53e3e] text-white rounded-xl flex items-center justify-center font-bold text-sm shadow">
-            SE
-          </div>
-          <span class="font-bold text-lg tracking-wide">SEA <span class="text-[#f6ad55]">Admin</span></span>
+  <div class="min-h-screen bg-sky text-ink">
+    <main class="px-4 sm:px-6 py-8">
+      <div class="max-w-[var(--width-content)] mx-auto">
+        <!-- Navigation -->
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
+          <router-link
+            to="/companies"
+            class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-red hover:underline underline-offset-4"
+          >
+            <span aria-hidden="true">←</span>
+            View companies
+          </router-link>
+
+          <button
+            type="button"
+            @click="logout"
+            class="min-h-11 px-4 border border-ink/20 rounded-md text-sm font-semibold hover:bg-paper/60 transition-colors cursor-pointer"
+          >
+            Sign out
+          </button>
         </div>
 
-        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Management</div>
-        <nav class="space-y-1">
-          <button type="button" class="w-full flex items-center gap-3 px-4 py-3 bg-white/10 rounded-xl font-medium text-sm text-white">
-            <span>🏢</span> Companies
-          </button>
-        </nav>
-
-        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-8 mb-3">Site</div>
-        <nav class="space-y-1">
-          <router-link to="/" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 rounded-xl font-medium text-sm text-gray-300 transition-colors">
-            <span>🌐</span> View Site
-          </router-link>
-        </nav>
-      </div>
-
-      <div class="pt-6 border-t border-white/10">
-        <button type="button" @click="logout" class="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-500/20 text-red-300 rounded-xl font-medium text-sm transition-colors cursor-pointer">
-          <span>🚪</span> Sign Out
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <main class="flex-1 p-10 overflow-y-auto">
-      <div class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Page Title and Create Button -->
-        <div class="flex justify-between items-center">
+        <!-- Heading -->
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
           <div>
-            <h1 class="text-3xl font-extrabold text-[#102a43]">Companies</h1>
-            <p class="text-sm text-[#627d98] font-medium">Manage all partner company listings</p>
+            <p class="text-sm font-medium text-ink/60 mb-3">Admin workspace</p>
+
+            <h1
+              class="font-display text-[42px] sm:text-[56px] font-semibold leading-[1.1] tracking-tight"
+            >
+              Company
+              <span class="text-brand-red italic">database.</span>
+            </h1>
+
+            <p class="mt-4 text-base text-ink/75">Manage company information and listing status.</p>
           </div>
-          <button 
+
+          <button
             type="button"
             @click="openCreateModal"
-            class="bg-[#e53e3e] hover:bg-[#d33030] text-white font-semibold px-5 py-3 rounded-2xl shadow-md transition-colors cursor-pointer text-sm flex items-center gap-2"
+            class="inline-flex min-h-[48px] items-center justify-center gap-2 shrink-0 px-5 py-3 bg-brand-red text-white font-semibold rounded-md hover:bg-brand-red-hover transition-colors cursor-pointer"
           >
-            <span>+</span> Create New Company
+            <span aria-hidden="true">+</span>
+            Add company
           </button>
         </div>
 
-        <!-- Statistics Cards Container -->
-        <div style="display: flex; gap: 24px; width: 100%;">
-          <div style="width: calc(33.333% - 16px);" class="bg-[#e4eff7]/90 backdrop-blur-md p-6 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p class="text-[11px] font-bold text-[#627d98] uppercase tracking-wider">Total Companies</p>
-              <h3 class="text-3xl font-extrabold text-[#102a43] mt-1">{{ companies.length }}</h3>
-            </div>
-            <div class="w-12 h-12 bg-white/70 rounded-2xl flex items-center justify-center text-xl shadow-sm">🏢</div>
+        <!-- Statistics -->
+        <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-paper border border-ink/10 rounded-md p-5">
+            <dt class="text-sm text-ink/65">Total companies</dt>
+            <dd class="mt-2 text-[32px] font-semibold">
+              {{ companies.length }}
+            </dd>
           </div>
 
-          <div style="width: calc(33.333% - 16px);" class="bg-[#e4eff7]/90 backdrop-blur-md p-6 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p class="text-[11px] font-bold text-[#627d98] uppercase tracking-wider">Active Listings</p>
-              <h3 class="text-3xl font-extrabold text-green-700 mt-1">{{ activeCount }}</h3>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center text-xl shadow-sm">✅</div>
+          <div class="bg-paper border border-ink/10 rounded-md p-5">
+            <dt class="text-sm text-ink/65">Active listings</dt>
+            <dd class="mt-2 text-[32px] font-semibold text-green-800">
+              {{ activeCount }}
+            </dd>
           </div>
 
-          <div style="width: calc(33.333% - 16px);" class="bg-[#e4eff7]/90 backdrop-blur-md p-6 rounded-[24px] border border-white/80 shadow-sm flex items-center justify-between">
-            <div>
-              <p class="text-[11px] font-bold text-[#627d98] uppercase tracking-wider">Inactive Listings</p>
-              <h3 class="text-3xl font-extrabold text-gray-500 mt-1">{{ inactiveCount }}</h3>
-            </div>
-            <div class="w-12 h-12 bg-gray-200 rounded-2xl flex items-center justify-center text-xl shadow-sm">⏸️</div>
+          <div class="bg-paper border border-ink/10 rounded-md p-5">
+            <dt class="text-sm text-ink/65">Inactive listings</dt>
+            <dd class="mt-2 text-[32px] font-semibold text-ink/55">
+              {{ inactiveCount }}
+            </dd>
           </div>
-        </div>
+        </dl>
 
-        <!-- Search Bar and Status Filters -->
-        <div class="bg-[#e4eff7]/90 backdrop-blur-md p-3 rounded-[28px] border border-white/80 shadow-sm flex items-center gap-3 w-full">
-          <div class="flex-1 w-full flex items-center bg-white/70 border border-white/60 rounded-2xl px-4 h-12">
-            <span class="text-gray-400 mr-3 text-base select-none">🔍</span>
-            <input 
-              type="text" 
+        <!-- Search and filters -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+          <div class="w-full lg:max-w-[440px]">
+            <label for="admin-company-search" class="sr-only">
+              Search by company name or city
+            </label>
+
+            <input
+              id="admin-company-search"
               v-model="searchQuery"
+              type="search"
               placeholder="Search by name or city..."
-              class="w-full bg-transparent text-sm text-[#102a43] font-medium focus:outline-none"
+              class="w-full h-[52px] px-4 bg-paper border border-ink/20 rounded-md text-base focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/15"
             />
           </div>
 
-          <div class="flex items-center gap-2 shrink-0">
-            <button 
+          <div class="flex flex-wrap gap-2" aria-label="Listing status">
+            <button
+              v-for="option in [
+                { value: 'all', label: 'All' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]"
+              :key="option.value"
               type="button"
-              @click="statusFilter = 'all'"
-              class="px-6 py-3 rounded-2xl text-sm font-semibold transition-colors cursor-pointer"
-              :class="statusFilter === 'all' ? 'bg-[#102a43] text-white shadow' : 'bg-white/70 text-[#102a43] hover:bg-white'"
+              @click="statusFilter = option.value"
+              :aria-pressed="statusFilter === option.value"
+              class="min-h-11 px-5 py-2 border rounded-md text-sm font-semibold transition-colors cursor-pointer"
+              :class="
+                statusFilter === option.value
+                  ? 'bg-ink border-ink text-white'
+                  : 'bg-paper border-ink/15 text-ink hover:border-ink/40'
+              "
             >
-              All
-            </button>
-            <button 
-              type="button"
-              @click="statusFilter = 'active'"
-              class="px-6 py-3 rounded-2xl text-sm font-semibold transition-colors cursor-pointer"
-              :class="statusFilter === 'active' ? 'bg-[#102a43] text-white shadow' : 'bg-white/70 text-[#102a43] hover:bg-white'"
-            >
-              Active
-            </button>
-            <button 
-              type="button"
-              @click="statusFilter = 'inactive'"
-              class="px-6 py-3 rounded-2xl text-sm font-semibold transition-colors cursor-pointer"
-              :class="statusFilter === 'inactive' ? 'bg-[#102a43] text-white shadow' : 'bg-white/70 text-[#102a43] hover:bg-white'"
-            >
-              Inactive
+              {{ option.label }}
             </button>
           </div>
         </div>
 
-        <!-- Companies Data Table -->
-        <div class="bg-[#e4eff7]/90 backdrop-blur-md rounded-[28px] border border-white/80 shadow-sm overflow-hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-white/60 text-[11px] font-bold text-[#627d98] uppercase tracking-wider">
-                  <th class="p-5">Company</th>
-                  <th class="p-5">City</th>
-                  <th class="p-5">Internship Fields</th>
-                  <th class="p-5">Languages</th>
-                  <th class="p-5">Status</th>
-                  <th class="p-5 text-right">Actions</th>
+        <p role="status" class="text-sm text-ink/65 mb-3">
+          {{ filteredCompanies.length }}
+          {{ filteredCompanies.length === 1 ? 'company found' : 'companies found' }}
+        </p>
+
+        <!-- Company table -->
+        <div class="bg-paper border border-ink/15 rounded-md overflow-hidden">
+          <div
+            class="overflow-x-auto"
+            tabindex="0"
+            role="region"
+            aria-label="Company database table"
+          >
+            <table class="w-full min-w-[960px] text-left border-collapse">
+              <caption class="sr-only">
+                Companies with study programmes, website languages and management actions
+              </caption>
+
+              <thead class="bg-ink/5">
+                <tr class="border-b border-ink/15 text-sm text-ink/65">
+                  <th scope="col" class="px-5 py-4 font-semibold">Company</th>
+                  <th scope="col" class="px-5 py-4 font-semibold">City</th>
+                  <th scope="col" class="px-5 py-4 font-semibold">Study programme</th>
+                  <th scope="col" class="px-5 py-4 font-semibold">Website language</th>
+                  <th scope="col" class="px-5 py-4 font-semibold">Status</th>
+                  <th scope="col" class="px-5 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-white/40 text-sm text-[#102a43]">
-                
-                <tr v-for="company in filteredCompanies" :key="company.companyId" class="hover:bg-white/35 transition-colors">
-                  <td class="p-5">
-                    <div class="font-bold text-[#102a43]">{{ company.brandName || company['name (source / legal)'] }}</div>
-                    <!-- Display short description snippet inside table -->
-                    <div v-if="company.description" class="text-xs text-[#627d98] mt-1 line-clamp-1 max-w-xs">
-                      {{ company.description }}
+
+              <tbody class="divide-y divide-ink/10 text-sm">
+                <tr
+                  v-for="company in filteredCompanies"
+                  :key="company.companyId"
+                  class="hover:bg-white/50 transition-colors"
+                >
+                  <th scope="row" class="px-5 py-4 text-left font-normal">
+                    <div class="font-semibold text-[15px]">
+                      {{ company.brandName || company['name (source / legal)'] }}
                     </div>
-                  </td>
-                  <td class="p-5 text-[#627d98] font-medium">{{ company.city }}</td>
-                  
-                  <!-- Programmes badges -->
-                  <td class="p-5">
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                      <div 
-                        v-for="(prog, idx) in getProgrammesList(company).slice(0, 2)" 
-                        :key="idx"
-                        style="background-color: #fadadd; color: #9b2c2c; font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 8px;"
-                      >
-                        {{ prog }}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <!-- Languages badges -->
-                  <td class="p-5">
-                    <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                      <div 
-                        v-for="lang in getLanguagesList(company)" 
-                        :key="lang"
-                        style="background-color: #f3f4d3; color: #5f6629; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 8px; border: 1px solid #d4dc9c; display: inline-block;"
-                      >
-                        {{ formatLangCode(lang) }}
-                      </div>
-                    </div>
-                  </td>
-                  
-                  <!-- Status badge -->
-                  <td class="p-5">
-                    <div 
-                      style="display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 500; border: 1px solid;"
-                      :style="company.status === 'inactive' ? 'background-color: #f3f4f6; color: #4b5563; border-color: #d1d5db;' : 'background-color: #d8eedf; color: #2d7d46; border-color: #aee4bc;'"
+
+                    <p
+                      v-if="company.description"
+                      class="mt-1 max-w-[260px] line-clamp-2 text-xs leading-relaxed text-ink/60"
                     >
-                      <div style="width: 8px; height: 8px; border-radius: 50%;" :style="company.status === 'inactive' ? 'background-color: #6b7280;' : 'background-color: #2d7d46;'"></div>
-                      {{ company.status === 'inactive' ? 'Inactive' : 'Active' }}
+                      {{ company.description }}
+                    </p>
+                  </th>
+
+                  <td class="px-5 py-4 text-ink/70">
+                    {{ company.city || 'Not provided' }}
+                  </td>
+
+                  <td class="px-5 py-4">
+                    <div class="flex flex-wrap gap-2">
+                      <span
+                        v-for="programme in getProgrammesList(company)"
+                        :key="programme"
+                        class="bg-sky/30 px-2 py-1 rounded text-xs"
+                      >
+                        {{
+                          programme.toLowerCase() === 'datamatiker'
+                            ? 'Datamatiker / Computer Science'
+                            : programme.toLowerCase() === 'multimediedesigner'
+                              ? 'Multimedia Design'
+                              : programme
+                        }}
+                      </span>
+
+                      <span v-if="!getProgrammesList(company).length" class="text-ink/50">
+                        Not provided
+                      </span>
                     </div>
                   </td>
-                  
-                  <!-- Action buttons -->
-                  <td class="p-5 text-right whitespace-nowrap">
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                      <button 
+
+                  <td class="px-5 py-4 text-ink/70">
+                    {{ getLanguagesList(company).join(', ') || 'Not provided' }}
+                  </td>
+
+                  <td class="px-5 py-4">
+                    <span
+                      class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-xs font-medium whitespace-nowrap"
+                      :class="
+                        company.status === 'inactive'
+                          ? 'bg-ink/5 text-ink/60'
+                          : 'bg-green-100 text-green-800'
+                      "
+                    >
+                      <span aria-hidden="true" class="w-1.5 h-1.5 rounded-full bg-current"></span>
+                      {{ company.status === 'inactive' ? 'Inactive' : 'Active' }}
+                    </span>
+                  </td>
+
+                  <td class="px-5 py-4">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
                         type="button"
                         @click="editCompany(company)"
-                        style="display: inline-flex; align-items: center; gap: 6px; background-color: #ffffff; color: #102a43; font-weight: 600; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #cbd5e1; cursor: pointer;"
+                        :aria-label="`Edit ${company.brandName || company['name (source / legal)']}`"
+                        class="min-h-11 px-3 border border-ink/20 rounded-md font-semibold hover:bg-white cursor-pointer"
                       >
-                        <span>✏️</span> Edit
+                        Edit
                       </button>
-                      <button 
+
+                      <button
                         type="button"
                         @click="deleteCompany(company.companyId)"
-                        style="display: inline-flex; align-items: center; gap: 6px; background-color: #fce8e6; color: #b91c1c; font-weight: 600; font-size: 12px; padding: 6px 14px; border-radius: 9999px; border: 1px solid #f8b4b4; cursor: pointer;"
+                        :aria-label="`Delete ${company.brandName || company['name (source / legal)']}`"
+                        class="min-h-11 px-3 rounded-md text-brand-red hover:bg-brand-red/5 cursor-pointer"
                       >
-                        <span>🗑️</span> Delete
+                        Delete
                       </button>
                     </div>
                   </td>
                 </tr>
 
                 <tr v-if="filteredCompanies.length === 0">
-                  <td colspan="6" class="p-10 text-center text-[#627d98] font-semibold">
-                    No companies found.
+                  <td colspan="6" class="px-6 py-12 text-center">
+                    <p class="font-semibold mb-2">No companies found</p>
+                    <p class="text-ink/60">Try another name, city or status.</p>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
     </main>
 
     <!-- MODAL WINDOW (FULLSCREEN FIXED) -->
-    <div v-if="isModalOpen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 16px;">
-      <div style="background-color: #e4eff7; border: 1px solid #ffffff; border-radius: 28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px;">
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.6); padding-bottom: 12px;">
-          <h2 style="font-size: 20px; font-weight: 800; color: #102a43; margin: 0;">
-            {{ isEditing ? 'Edit Company' : 'Create New Company' }}
-          </h2>
-          <button type="button" @click="closeModal" style="background: none; border: none; font-size: 18px; font-weight: bold; cursor: pointer; color: #486581;">✕</button>
+    <!-- Company editor -->
+    <div
+      v-if="isModalOpen"
+      class="fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50 p-4"
+      @keydown.esc.stop="closeModal"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="company-editor-title"
+        class="w-full max-w-[760px] max-h-[90vh] overflow-y-auto bg-paper text-ink rounded-md border border-ink/15 shadow-xl"
+      >
+        <div class="flex items-center justify-between gap-4 border-b border-ink/15 px-6 py-5">
+          <div>
+            <p class="text-sm text-ink/60 mb-1">Company database</p>
+            <h2 id="company-editor-title" class="text-2xl font-semibold">
+              {{ isEditing ? 'Edit company' : 'Add company' }}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            @click="closeModal"
+            aria-label="Close company editor"
+            class="min-w-11 min-h-11 rounded-md text-2xl hover:bg-ink/5 cursor-pointer"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
 
-        <form @submit.prevent="saveCompany" style="display: flex; flex-direction: column; gap: 14px;">
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Company / Brand Name</label>
-            <input 
-              type="text" 
-              v-model="form.brandName" 
-              required
-              placeholder="e.g. 2care4"
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500;"
-            />
+        <form @submit.prevent="saveCompany" class="p-6">
+          <p class="text-sm text-ink/60 mb-6">Fields marked * are required.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+            <div v-for="field in formFields" :key="field.key">
+              <label :for="`company-${field.key}`" class="block text-sm font-semibold mb-2">
+                {{ field.label }}
+                <span v-if="field.required" class="text-brand-red">*</span>
+              </label>
+
+              <input
+                :id="`company-${field.key}`"
+                v-model="form[field.key]"
+                :type="field.type"
+                :required="field.required"
+                :aria-describedby="field.hint ? `hint-${field.key}` : undefined"
+                class="w-full min-h-[48px] px-3 py-2 bg-white/75 border border-ink/20 rounded-md text-base focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/15"
+              />
+
+              <p
+                v-if="field.hint"
+                :id="`hint-${field.key}`"
+                class="mt-2 text-xs leading-relaxed text-ink/60"
+              >
+                {{ field.hint }}
+              </p>
+            </div>
           </div>
 
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">City</label>
-            <input 
-              type="text" 
-              v-model="form.city" 
-              required
-              placeholder="e.g. Esbjerg"
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500;"
-            />
-          </div>
+          <div class="mt-6">
+            <label for="company-description" class="block text-sm font-semibold mb-2">
+              Description
+            </label>
 
-          <!-- Description Field -->
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Description</label>
-            <textarea 
-              v-model="form.description" 
-              rows="3"
-              placeholder="Enter company description..."
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500; resize: vertical;"
+            <textarea
+              id="company-description"
+              v-model="form.description"
+              rows="5"
+              class="w-full px-3 py-3 bg-white/75 border border-ink/20 rounded-md text-base resize-y focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/15"
             ></textarea>
           </div>
 
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Internship Fields (comma separated)</label>
-            <input 
-              type="text" 
-              v-model="form.sourceProgrammes" 
-              placeholder="e.g. datamatiker, multimediedesigner"
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500;"
-            />
-          </div>
+          <div class="mt-5">
+            <label for="company-status" class="block text-sm font-semibold mb-2">
+              Listing status
+            </label>
 
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Languages (e.g. DK, EN)</label>
-            <input 
-              type="text" 
-              v-model="form.websiteLanguages" 
-              placeholder="e.g. DK, EN"
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500;"
-            />
-          </div>
-
-          <div>
-            <label style="display: block; font-size: 11px; font-weight: 700; color: #627d98; text-transform: uppercase; margin-bottom: 4px;">Status</label>
-            <select 
+            <select
+              id="company-status"
               v-model="form.status"
-              style="width: 100%; background-color: rgba(255,255,255,0.9); border: 1px solid #ffffff; border-radius: 12px; padding: 10px 14px; font-size: 14px; color: #102a43; outline: none; font-weight: 500; cursor: pointer;"
+              class="w-full sm:max-w-[240px] min-h-[48px] px-3 bg-white/75 border border-ink/20 rounded-md focus:outline-none focus:border-brand-red"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </div>
 
-          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.6); padding-top: 12px;">
-            <button 
-              type="button" 
+          <p
+            v-if="saveError"
+            role="alert"
+            class="mt-5 px-4 py-3 bg-brand-red/5 border border-brand-red/20 rounded-md text-sm text-brand-red"
+          >
+            {{ saveError }}
+          </p>
+
+          <div class="flex flex-wrap justify-end gap-3 mt-7 pt-5 border-t border-ink/15">
+            <button
+              type="button"
               @click="closeModal"
-              style="padding: 10px 16px; border-radius: 10px; background-color: #e2e8f0; color: #334155; font-weight: 600; font-size: 13px; border: none; cursor: pointer;"
+              class="min-h-[48px] px-5 border border-ink/20 rounded-md font-semibold hover:bg-white cursor-pointer"
             >
               Cancel
             </button>
-            <button 
+
+            <button
               type="submit"
-              style="padding: 10px 16px; border-radius: 10px; background-color: #102a43; color: white; font-weight: 600; font-size: 13px; border: none; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+              class="min-h-[48px] px-6 bg-brand-red text-white rounded-md font-semibold hover:bg-brand-red-hover cursor-pointer"
             >
-              Save Changes
+              {{ isEditing ? 'Save changes' : 'Add company' }}
             </button>
           </div>
         </form>
-
-      </div>
+      </section>
     </div>
-
   </div>
 </template>
 
@@ -329,41 +369,116 @@ const statusFilter = ref('all')
 // Modal state
 const isModalOpen = ref(false)
 const isEditing = ref(false)
-const form = ref({
+const emptyCompanyForm = () => ({
   companyId: null,
   brandName: '',
   city: '',
   description: '',
   sourceProgrammes: '',
+  internshipFields: '',
   websiteLanguages: '',
-  status: 'active'
+  website: '',
+  careerUrl: '',
+  email: '',
+  phone: '',
+  address: '',
+  status: 'active',
 })
+
+const form = ref(emptyCompanyForm())
+const saveError = ref('')
+
+const formFields = [
+  {
+    key: 'brandName',
+    label: 'Company / brand name',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: 'city',
+    label: 'City',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: 'sourceProgrammes',
+    label: 'Study programmes',
+    type: 'text',
+    hint: 'Separate with commas: datamatiker, multimediedesigner',
+  },
+  {
+    key: 'internshipFields',
+    label: 'Internship fields',
+    type: 'text',
+    hint: 'Use field codes separated by commas, for example: frontend-development, ux-ui-design. Leave empty if not specified.',
+  },
+  {
+    key: 'websiteLanguages',
+    label: 'Website languages',
+    type: 'text',
+    hint: 'Separate with commas: Danish, English',
+  },
+  {
+    key: 'website',
+    label: 'Website',
+    type: 'url',
+    hint: 'Full link starting with https://',
+  },
+  {
+    key: 'careerUrl',
+    label: 'Careers page',
+    type: 'url',
+    hint: 'Leave empty if there is no careers page.',
+  },
+  {
+    key: 'email',
+    label: 'Email',
+    type: 'email',
+  },
+  {
+    key: 'phone',
+    label: 'Phone',
+    type: 'tel',
+  },
+  {
+    key: 'address',
+    label: 'Address',
+    type: 'text',
+  },
+]
 
 onMounted(() => {
   const saved = localStorage.getItem('companies_list')
   if (saved) {
     companies.value = JSON.parse(saved)
   } else {
-    companies.value = initialCompaniesData.map(item => ({
+    companies.value = initialCompaniesData.map((item) => ({
       ...item,
       description: item.description || item['description'] || '',
-      status: item.status || 'active'
+      status: item.status || 'active',
     }))
     localStorage.setItem('companies_list', JSON.stringify(companies.value))
   }
 })
 
-const activeCount = computed(() => companies.value.filter(c => c.status !== 'inactive').length)
-const inactiveCount = computed(() => companies.value.filter(c => c.status === 'inactive').length)
+const activeCount = computed(() => companies.value.filter((c) => c.status !== 'inactive').length)
+const inactiveCount = computed(() => companies.value.filter((c) => c.status === 'inactive').length)
 
 const getProgrammesList = (company) => {
   if (!company.sourceProgrammes) return []
-  return company.sourceProgrammes.split(/[,;]/).map(s => s.trim()).filter(Boolean)
+  return company.sourceProgrammes
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
 }
 
 const getLanguagesList = (company) => {
   if (!company.websiteLanguages) return []
-  return company.websiteLanguages.split(/[,;]/).map(l => l.trim()).filter(Boolean)
+  return company.websiteLanguages
+    .split(/[,;]/)
+    .map((l) => l.trim())
+    .filter(Boolean)
 }
 
 const formatLangCode = (code) => {
@@ -375,7 +490,7 @@ const formatLangCode = (code) => {
 }
 
 const filteredCompanies = computed(() => {
-  return companies.value.filter(company => {
+  return companies.value.filter((company) => {
     const name = (company.brandName || company['name (source / legal)'] || '').toLowerCase()
     const city = (company.city || '').toLowerCase()
     const query = searchQuery.value.toLowerCase()
@@ -395,71 +510,120 @@ const filteredCompanies = computed(() => {
 
 const deleteCompany = (id) => {
   if (confirm('Are you sure you want to delete this company?')) {
-    companies.value = companies.value.filter(c => c.companyId !== id)
+    companies.value = companies.value.filter((c) => c.companyId !== id)
     localStorage.setItem('companies_list', JSON.stringify(companies.value))
   }
 }
 
 const openCreateModal = () => {
   isEditing.value = false
+  saveError.value = ''
   form.value = {
-    companyId: Date.now(),
-    brandName: '',
-    city: '',
-    description: '',
-    sourceProgrammes: '',
-    websiteLanguages: 'DK, EN',
-    status: 'active'
+    ...emptyCompanyForm(),
+    companyId: crypto.randomUUID(),
   }
   isModalOpen.value = true
 }
 
 const editCompany = (company) => {
   isEditing.value = true
+  saveError.value = ''
+
+  const toText = (value) => {
+    return Array.isArray(value) ? value.join(', ') : String(value || '')
+  }
+
   form.value = {
     companyId: company.companyId,
     brandName: company.brandName || company['name (source / legal)'] || '',
-    city: company.city || '',
-    description: company.description || company['description'] || '',
-    sourceProgrammes: company.sourceProgrammes || '',
-    websiteLanguages: company.websiteLanguages || '',
-    status: company.status || 'active'
+    city: toText(company.city),
+    description: toText(company.description),
+    sourceProgrammes: toText(company.sourceProgrammes),
+    internshipFields: toText(company['internshipFieldSlugs (optional)']),
+    websiteLanguages: toText(company.websiteLanguages),
+    website: toText(company.website),
+    careerUrl: toText(company.careerUrl),
+    email: toText(company.email),
+    phone: toText(company.phone),
+    address: toText(company.address),
+    status: company.status || 'active',
   }
+
   isModalOpen.value = true
 }
 
 const closeModal = () => {
   isModalOpen.value = false
+  saveError.value = ''
 }
 
 const saveCompany = () => {
-  if (isEditing.value) {
-    const index = companies.value.findIndex(c => c.companyId === form.value.companyId)
-    if (index !== -1) {
-      companies.value[index] = {
-        ...companies.value[index],
-        brandName: form.value.brandName,
-        city: form.value.city,
-        description: form.value.description,
-        sourceProgrammes: form.value.sourceProgrammes,
-        websiteLanguages: form.value.websiteLanguages,
-        status: form.value.status
-      }
-    }
-  } else {
-    companies.value.unshift({
-      companyId: form.value.companyId,
-      brandName: form.value.brandName,
-      city: form.value.city,
-      description: form.value.description,
-      sourceProgrammes: form.value.sourceProgrammes,
-      websiteLanguages: form.value.websiteLanguages,
-      status: form.value.status
-    })
+  saveError.value = ''
+
+  const brandName = form.value.brandName.trim()
+  const city = form.value.city.trim()
+
+  if (!brandName || !city) {
+    saveError.value = 'Enter a company name and city.'
+    return
   }
 
-  localStorage.setItem('companies_list', JSON.stringify(companies.value))
-  closeModal()
+  for (const key of ['website', 'careerUrl']) {
+    const value = form.value[key].trim()
+    if (!value) continue
+
+    try {
+      const url = new URL(value)
+
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        throw new Error('Invalid protocol')
+      }
+    } catch {
+      saveError.value = 'Website and Careers links must start with https:// or http://.'
+      return
+    }
+  }
+
+  const updatedFields = {
+    companyId: form.value.companyId,
+    brandName,
+    city,
+    description: form.value.description.trim(),
+    sourceProgrammes: form.value.sourceProgrammes.trim(),
+    'internshipFieldSlugs (optional)': form.value.internshipFields.trim(),
+    websiteLanguages: form.value.websiteLanguages.trim(),
+    website: form.value.website.trim(),
+    careerUrl: form.value.careerUrl.trim(),
+    email: form.value.email.trim(),
+    phone: form.value.phone.trim(),
+    address: form.value.address.trim(),
+    status: form.value.status,
+  }
+
+  let updatedCompanies
+
+  if (isEditing.value) {
+    const index = companies.value.findIndex((company) => company.companyId === form.value.companyId)
+
+    if (index === -1) {
+      saveError.value = 'Company not found. Close this window and try again.'
+      return
+    }
+
+    updatedCompanies = companies.value.map((company, companyIndex) => {
+      return companyIndex === index ? { ...company, ...updatedFields } : company
+    })
+  } else {
+    updatedCompanies = [updatedFields, ...companies.value]
+  }
+
+  try {
+    localStorage.setItem('companies_list', JSON.stringify(updatedCompanies))
+    companies.value = updatedCompanies
+    closeModal()
+  } catch {
+    saveError.value = 'Could not save changes in this browser. Please try again.'
+  }
 }
 
 const logout = () => {
