@@ -104,6 +104,68 @@ watch(
   { flush: 'sync' },
 )
 
+// Collect selected filters for the removable chips.
+const activeFilters = computed(() => {
+  const filters = []
+
+  if (selectedProgramme.value !== 'All programmes' && selectedProgramme.value) {
+    filters.push({
+      type: 'programme',
+      value: selectedProgramme.value,
+      label: selectedProgramme.value,
+    })
+  }
+
+  selectedFields.value.forEach((field) => {
+    filters.push({
+      type: 'field',
+      value: field,
+      label: field,
+    })
+  })
+
+  selectedCities.value.forEach((city) => {
+    filters.push({
+      type: 'city',
+      value: city,
+      label: city,
+    })
+  })
+
+  if (languageEnglish.value) {
+    filters.push({
+      type: 'language',
+      value: 'English',
+      label: 'Website: English',
+    })
+  }
+
+  if (languageDanish.value) {
+    filters.push({
+      type: 'language',
+      value: 'Danish',
+      label: 'Website: Danish',
+    })
+  }
+
+  return filters
+})
+
+// Remove the selected filter and update its control.
+const removeFilter = (filter) => {
+  if (filter.type === 'programme') {
+    selectedProgramme.value = 'All programmes'
+  } else if (filter.type === 'field') {
+    selectedFields.value = selectedFields.value.filter((field) => field !== filter.value)
+  } else if (filter.type === 'city') {
+    selectedCities.value = selectedCities.value.filter((city) => city !== filter.value)
+  } else if (filter.value === 'English') {
+    languageEnglish.value = false
+  } else if (filter.value === 'Danish') {
+    languageDanish.value = false
+  }
+}
+
 onMounted(() => {
   // Scroll to the top of the page smoothly on mount
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -256,6 +318,14 @@ const totalPages = computed(() => {
   return Math.ceil(filteredCompanies.value.length / itemsPerPage) || 1
 })
 
+const visiblePages = computed(() => {
+  const count = Math.min(5, totalPages.value)
+
+  const start = Math.max(1, Math.min(currentPage.value - 2, totalPages.value - count + 1))
+
+  return Array.from({ length: count }, (_, index) => start + index)
+})
+
 const paginatedCompanies = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage
   const end = start + itemsPerPage
@@ -317,8 +387,23 @@ const downloadPDF = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-16">
-    <div class="max-w-[var(--width-content)] mx-auto">
+  <div
+    class="relative isolate min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-[210px] sm:pb-[290px] lg:pb-[360px]"
+  >
+    <!-- Decorative building and sun below the results -->
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[200px] sm:h-[300px] lg:h-[400px] overflow-hidden"
+    >
+      <img
+        src="/images/building-sun.png"
+        alt=""
+        draggable="false"
+        loading="lazy"
+        class="absolute bottom-0 left-0 w-[340px] sm:w-[520px] lg:w-[700px] max-w-full h-auto"
+      />
+    </div>
+    <div class="relative z-10 max-w-[var(--width-content)] mx-auto">
       <!-- Page heading -->
       <section class="relative mb-10 sm:mb-12">
         <div class="relative z-10 md:pr-[240px] lg:pr-[320px]">
@@ -350,160 +435,200 @@ const downloadPDF = () => {
 
       <!-- Filters and results -->
       <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
-        <!-- Left Sidebar: Active Filters -->
-        <div class="min-w-0">
-          <div
-            class="bg-[#e4eff7]/95 backdrop-blur-md rounded-[28px] border border-white/80 shadow-md"
-          >
-            <div
-              class="bg-[#102a43] text-white p-5 font-bold text-lg rounded-t-[28px] flex justify-between items-center"
+        <!-- Left sidebar: filters -->
+        <aside
+          aria-label="Company filters"
+          class="min-w-0 bg-paper border border-ink/10 rounded-md p-5"
+        >
+          <!-- Filter heading and reset button -->
+          <div class="flex items-center justify-between gap-3 mb-6">
+            <h2 class="text-xl font-semibold text-ink">Filters</h2>
+
+            <button
+              @click="clearAllFilters"
+              type="button"
+              class="min-h-11 text-sm text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
             >
-              <span>Active Filters</span>
-              <!-- Clean All Button -->
-              <button
-                @click="clearAllFilters"
-                class="text-xs bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 rounded-xl transition-colors cursor-pointer font-normal"
-              >
-                Clean all
-              </button>
-            </div>
-
-            <div class="p-6 space-y-6">
-              <!-- Study Programme Filter -->
-              <div>
-                <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider mb-2">
-                  Study Programme
-                </label>
-                <CustomSelect
-                  v-model="selectedProgramme"
-                  placeholder="All programmes"
-                  :options="['All programmes', ...studyProgrammes]"
-                  :is-open="isProgrammeOpen"
-                  @toggle="isProgrammeOpen = !isProgrammeOpen"
-                  @select="isProgrammeOpen = false"
-                />
-              </div>
-
-              <!-- Cities Filter (Checkboxes) -->
-              <div class="pt-4 border-t border-white/50">
-                <div class="flex justify-between items-center mb-3">
-                  <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider">
-                    Cities
-                  </label>
-                  <span class="text-[10px] text-gray-500 bg-white/60 px-2 py-0.5 rounded-md"
-                    >Multiple</span
-                  >
-                </div>
-                <div class="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
-                  <label
-                    v-for="city in availableCities"
-                    :key="city"
-                    class="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#102a43]"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="city"
-                      v-model="selectedCities"
-                      class="w-4 h-4 rounded border-gray-300 text-[#102a43] focus:ring-0 cursor-pointer"
-                    />
-                    <span class="text-xs">{{ city }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Internship Fields Checkboxes (Optional) -->
-              <div class="pt-4 border-t border-white/50">
-                <div class="flex justify-between items-center mb-3">
-                  <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider">
-                    Internship Fields
-                  </label>
-                  <span class="text-[10px] text-gray-500 bg-white/60 px-2 py-0.5 rounded-md"
-                    >Optional</span
-                  >
-                </div>
-                <div class="space-y-2.5 max-h-[180px] overflow-y-auto pr-1">
-                  <label
-                    v-for="field in availableInternshipFields"
-                    :key="field"
-                    class="flex items-center gap-3 cursor-pointer text-sm font-medium text-[#102a43]"
-                  >
-                    <input
-                      type="checkbox"
-                      :value="field"
-                      v-model="selectedFields"
-                      class="w-4 h-4 rounded border-gray-300 text-[#102a43] focus:ring-0 cursor-pointer"
-                    />
-                    <span class="text-xs">{{ field }}</span>
-                  </label>
-                </div>
-              </div>
-
-              <!-- Language Checkboxes Filter -->
-              <div class="pt-4 border-t border-white/50">
-                <label class="block text-xs font-bold text-[#627d98] uppercase tracking-wider mb-3">
-                  Language
-                </label>
-                <div class="space-y-3">
-                  <label class="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      v-model="languageEnglish"
-                      class="w-4 h-4 rounded border-gray-300 text-[#102a43] focus:ring-0 cursor-pointer"
-                    />
-                    <span class="text-sm font-medium text-[#102a43]">English</span>
-                  </label>
-                  <label class="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      v-model="languageDanish"
-                      class="w-4 h-4 rounded border-gray-300 text-[#102a43] focus:ring-0 cursor-pointer"
-                    />
-                    <span class="text-sm font-medium text-[#102a43]">Danish</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="pt-4 border-t border-white/50">
-                <button
-                  @click="router.push('/')"
-                  class="w-full text-center py-3 bg-white/60 hover:bg-white border border-white/80 rounded-2xl text-[#102a43] font-semibold text-sm transition-colors shadow-sm cursor-pointer"
-                >
-                  &larr; New Search
-                </button>
-              </div>
-            </div>
+              Clear all
+            </button>
           </div>
-        </div>
+
+          <!-- Study programme -->
+          <div class="mb-6">
+            <h3 class="text-[15px] font-semibold text-ink mb-3">Study programme</h3>
+
+            <CustomSelect
+              v-model="selectedProgramme"
+              placeholder="All programmes"
+              :options="['All programmes', ...studyProgrammes]"
+              :is-open="isProgrammeOpen"
+              @toggle="isProgrammeOpen = !isProgrammeOpen"
+              @select="isProgrammeOpen = false"
+            />
+          </div>
+
+          <!-- Internship fields -->
+          <fieldset class="min-w-0 mb-6">
+            <legend class="text-[15px] font-semibold text-ink mb-3">Internship fields</legend>
+
+            <div class="max-h-[260px] overflow-y-auto pr-2">
+              <label
+                v-for="field in availableInternshipFields"
+                :key="field"
+                class="flex items-start gap-3 py-2 text-sm text-ink/85 cursor-pointer"
+              >
+                <input
+                  v-model="selectedFields"
+                  type="checkbox"
+                  :value="field"
+                  class="mt-0.5 w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+                />
+
+                <span class="leading-5">
+                  {{ field }}
+                  <span v-if="field === 'Other'" class="block text-xs text-ink/60">
+                    Field not specified
+                  </span>
+                </span>
+              </label>
+
+              <p
+                v-if="availableInternshipFields.length === 0"
+                class="text-sm text-ink/65 leading-relaxed"
+              >
+                No internship fields available for this programme.
+              </p>
+            </div>
+          </fieldset>
+
+          <!-- Cities -->
+          <fieldset class="min-w-0 mb-6">
+            <legend class="text-[15px] font-semibold text-ink mb-3">Cities</legend>
+
+            <div class="max-h-[220px] overflow-y-auto pr-2">
+              <label
+                v-for="city in availableCities"
+                :key="city"
+                class="flex items-start gap-3 py-2 text-sm text-ink/85 cursor-pointer"
+              >
+                <input
+                  v-model="selectedCities"
+                  type="checkbox"
+                  :value="city"
+                  class="mt-0.5 w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+                />
+
+                <span class="leading-5">{{ city }}</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- Website language -->
+          <fieldset class="min-w-0">
+            <legend class="text-[15px] font-semibold text-ink mb-3">Website language</legend>
+
+            <label class="flex items-center gap-3 py-2 text-sm text-ink/85 cursor-pointer">
+              <input
+                v-model="languageEnglish"
+                type="checkbox"
+                class="w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+              />
+              <span>English</span>
+            </label>
+
+            <label class="flex items-center gap-3 py-2 text-sm text-ink/85 cursor-pointer">
+              <input
+                v-model="languageDanish"
+                type="checkbox"
+                class="w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+              />
+              <span>Danish</span>
+            </label>
+          </fieldset>
+        </aside>
 
         <!-- Right Content Area -->
         <div class="min-w-0 space-y-6">
           <!-- Top bar with counter, search input, and Download PDF button -->
-          <div
-            class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#e4eff7]/80 backdrop-blur-md p-5 rounded-[28px] border border-white/60 shadow-sm"
-          >
-            <p class="text-lg font-semibold text-ink" role="status">
-              {{ filteredCompanies.length }} companies found
+          <!-- Search and PDF download -->
+          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="flex-1 min-w-0">
+              <label for="company-search" class="sr-only"> Search company by name </label>
+
+              <input
+                id="company-search"
+                v-model="searchQuery"
+                type="search"
+                placeholder="Search company by name..."
+                class="w-full sm:max-w-[680px] min-h-[52px] px-4 py-3 bg-paper border border-ink/20 rounded-md text-[15px] text-ink placeholder:text-ink/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+              />
+            </div>
+
+            <button
+              @click="downloadPDF"
+              type="button"
+              :disabled="filteredCompanies.length === 0"
+              class="inline-flex min-h-11 items-center justify-center gap-2 px-2 text-sm font-medium text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 cursor-pointer whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-5 h-5"
+                aria-hidden="true"
+              >
+                <path d="M12 3v12m-4-4 4 4 4-4" />
+                <path d="M5 16v4h14v-4" />
+              </svg>
+
+              Download PDF
+            </button>
+          </div>
+
+          <!-- Result count and current range -->
+          <div class="flex flex-wrap items-center justify-between gap-2" role="status">
+            <p class="text-base font-semibold text-ink">
+              {{ filteredCompanies.length }}
+              {{ filteredCompanies.length === 1 ? 'company found' : 'companies found' }}
             </p>
 
-            <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-              <!-- Search by name input -->
-              <div class="relative w-full sm:w-64">
-                <input
-                  type="text"
-                  v-model="searchQuery"
-                  placeholder="Search company by name..."
-                  class="w-full px-4 py-2.5 bg-white/70 border border-white rounded-2xl text-sm text-[#102a43] placeholder-[#627d98] focus:outline-none focus:ring-2 focus:ring-[#102a43]/30 shadow-sm"
-                />
-              </div>
+            <p v-if="filteredCompanies.length > 0" class="text-sm text-ink/65">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }}–{{
+                Math.min(currentPage * itemsPerPage, filteredCompanies.length)
+              }}
+              of {{ filteredCompanies.length }}
+            </p>
+          </div>
 
-              <!-- Download PDF Button -->
-              <button
-                @click="downloadPDF"
-                class="w-full sm:w-auto px-4 py-2.5 bg-[#102a43] hover:bg-[#1a3a5f] text-white font-semibold text-sm rounded-2xl transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-              >
-                <span>Download PDF</span>
-              </button>
-            </div>
+          <!-- Selected filters with remove buttons -->
+          <div
+            v-if="activeFilters.length > 0"
+            class="flex flex-wrap items-center gap-2"
+            aria-label="Selected filters"
+          >
+            <button
+              v-for="filter in activeFilters"
+              :key="`${filter.type}:${filter.value}`"
+              @click="removeFilter(filter)"
+              type="button"
+              :aria-label="`Remove filter: ${filter.label}`"
+              class="inline-flex min-h-11 max-w-full items-center gap-3 px-3 py-2 bg-paper border border-ink/15 rounded-md text-sm text-ink text-left hover:border-brand-red hover:text-brand-red transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+            >
+              <span class="break-words">{{ filter.label }}</span>
+              <span aria-hidden="true" class="shrink-0 text-lg leading-none">×</span>
+            </button>
+
+            <button
+              @click="clearAllFilters"
+              type="button"
+              class="min-h-11 px-3 text-sm text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
+            >
+              Clear all
+            </button>
           </div>
 
           <!-- Companies grid: 14 items per page -->
@@ -516,7 +641,7 @@ const downloadPDF = () => {
               <!-- Company name and location -->
               <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
                 <h2
-                  class="min-w-0 font-display text-[26px] xl:text-[30px] font-semibold text-ink leading-tight break-words"
+                  class="font-sans text-[22px] xl:text-[24px] font-semibold text-ink leading-[1.25] tracking-[-0.02em] break-words"
                 >
                   {{ company.brandName }}
                 </h2>
@@ -614,25 +739,33 @@ const downloadPDF = () => {
             No companies found matching your selected filters or search query.
           </div>
 
-          <!-- Pagination (1, 2, 3...) -->
-          <div v-if="totalPages > 1" class="flex justify-center items-center space-x-2 pt-4">
+          <!-- Pagination -->
+          <nav
+            v-if="totalPages > 1"
+            aria-label="Company results pages"
+            class="flex flex-wrap items-center justify-center gap-2 pt-6"
+          >
             <button
               @click="currentPage--"
+              type="button"
               :disabled="currentPage === 1"
-              class="px-4 py-2 rounded-2xl bg-white/60 border border-white/80 text-sm font-semibold text-[#102a43] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white transition-colors shadow-sm cursor-pointer"
+              class="min-h-11 px-4 py-2 bg-paper border border-ink/15 rounded-md text-sm font-medium text-ink hover:border-brand-red transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
             >
               Previous
             </button>
 
             <button
-              v-for="page in totalPages"
+              v-for="page in visiblePages"
               :key="page"
               @click="currentPage = page"
-              class="w-10 h-10 rounded-2xl text-sm font-bold transition-all shadow-sm flex items-center justify-center cursor-pointer"
+              type="button"
+              :aria-label="`Page ${page}`"
+              :aria-current="currentPage === page ? 'page' : undefined"
+              class="min-w-11 min-h-11 px-3 py-2 border rounded-md text-sm font-semibold transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
               :class="
                 currentPage === page
-                  ? 'bg-[#102a43] text-white shadow-md'
-                  : 'bg-white/60 border border-white/80 text-[#102a43] hover:bg-white'
+                  ? 'bg-brand-red border-brand-red text-white'
+                  : 'bg-paper border-ink/15 text-ink hover:border-brand-red'
               "
             >
               {{ page }}
@@ -640,12 +773,13 @@ const downloadPDF = () => {
 
             <button
               @click="currentPage++"
+              type="button"
               :disabled="currentPage === totalPages"
-              class="px-4 py-2 rounded-2xl bg-white/60 border border-white/80 text-sm font-semibold text-[#102a43] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white transition-colors shadow-sm cursor-pointer"
+              class="min-h-11 px-4 py-2 bg-paper border border-ink/15 rounded-md text-sm font-medium text-ink hover:border-brand-red transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
             >
               Next
             </button>
-          </div>
+          </nav>
         </div>
       </div>
     </div>
