@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, RouterLink } from 'vue-router'
 import CustomSelect from '@/components/Home/CustomSelect.vue'
 import companiesData from '@/data/companies.json'
 import jsPDF from 'jspdf'
@@ -22,7 +22,7 @@ const languageDanish = ref(false)
 // Search and Pagination states
 const searchQuery = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 8
+const itemsPerPage = 14
 
 const studyProgrammes = [
   'Datamatiker / Computer Science',
@@ -317,15 +317,41 @@ const downloadPDF = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#a8c4d8] p-10">
-    <div class="max-w-7xl mx-auto">
-      <div class="text-sm text-[#627d98] mb-4 font-medium">
-        Home / <span class="text-[#102a43] font-semibold">Companies</span>
-      </div>
+  <div class="min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-16">
+    <div class="max-w-[var(--width-content)] mx-auto">
+      <!-- Page heading -->
+      <section class="relative mb-10 sm:mb-12">
+        <div class="relative z-10 md:pr-[240px] lg:pr-[320px]">
+          <h1
+            class="font-display text-[44px] sm:text-[60px] lg:text-[76px] font-semibold tracking-tight leading-[1.08]"
+          >
+            Find
+            <span class="text-brand-red italic">companies.</span>
+          </h1>
 
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+          <p class="mt-4 max-w-[580px] text-base sm:text-lg text-ink/75 leading-relaxed">
+            Explore companies relevant to your studies.
+          </p>
+
+          <p class="mt-2 max-w-[580px] text-sm text-ink/65 leading-relaxed">
+            Check company websites for current internship opportunities.
+          </p>
+        </div>
+
+        <!-- Decorative paper plane -->
+        <img
+          src="/images/paper-plane-trail.svg"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          class="pointer-events-none absolute right-0 top-0 hidden md:block w-[220px] lg:w-[300px] h-auto"
+        />
+      </section>
+
+      <!-- Filters and results -->
+      <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
         <!-- Left Sidebar: Active Filters -->
-        <div class="lg:col-span-1">
+        <div class="min-w-0">
           <div
             class="bg-[#e4eff7]/95 backdrop-blur-md rounded-[28px] border border-white/80 shadow-md"
           >
@@ -450,14 +476,14 @@ const downloadPDF = () => {
         </div>
 
         <!-- Right Content Area -->
-        <div class="lg:col-span-3 space-y-6">
+        <div class="min-w-0 space-y-6">
           <!-- Top bar with counter, search input, and Download PDF button -->
           <div
             class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#e4eff7]/80 backdrop-blur-md p-5 rounded-[28px] border border-white/60 shadow-sm"
           >
-            <h1 class="text-2xl font-extrabold text-[#102a43]">
+            <p class="text-lg font-semibold text-ink" role="status">
               {{ filteredCompanies.length }} companies found
-            </h1>
+            </p>
 
             <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <!-- Search by name input -->
@@ -480,56 +506,104 @@ const downloadPDF = () => {
             </div>
           </div>
 
-          <!-- Companies Grid (8 items per page) -->
+          <!-- Companies grid: 14 items per page -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div
+            <article
               v-for="company in paginatedCompanies"
               :key="company.id"
-              class="bg-[#e4eff7]/80 backdrop-blur-md p-6 rounded-[28px] border border-white/60 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              class="min-w-0 flex flex-col bg-paper border border-ink/10 rounded-md p-5 xl:p-6"
             >
-              <div>
-                <div class="mb-3">
-                  <h2 class="text-xl font-bold text-[#102a43]">{{ company.brandName }}</h2>
-                  <p class="text-sm text-[#627d98]">📍 {{ company.city }}</p>
-                </div>
+              <!-- Company name and location -->
+              <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
+                <h2
+                  class="min-w-0 font-display text-[26px] xl:text-[30px] font-semibold text-ink leading-tight break-words"
+                >
+                  {{ company.brandName }}
+                </h2>
 
-                <!-- Full Unclipped Company Description -->
-                <p v-if="company.description" class="text-xs text-[#627d98] mb-4">
-                  {{ company.description }}
+                <p v-if="company.city" class="pt-1 text-sm text-ink/70">
+                  {{ company.city }}
                 </p>
-
-                <div class="flex flex-wrap gap-2 mb-6">
-                  <span
-                    v-for="(prog, idx) in company.sourceProgrammes"
-                    :key="idx"
-                    class="bg-[#fadadd]/80 text-[#9b2c2c] text-xs px-3 py-1.5 rounded-xl font-medium"
-                  >
-                    {{ prog }}
-                  </span>
-                </div>
               </div>
 
-              <div>
-                <div class="flex gap-2 mb-4">
-                  <span
-                    v-for="lang in company.websiteLanguages"
-                    :key="lang"
-                    class="bg-white/70 text-[#102a43] text-xs px-2.5 py-1 rounded-lg font-bold uppercase"
-                  >
-                    {{ lang }}
-                  </span>
+              <!-- Short preview; the full description is on the company page -->
+              <p
+                v-if="company.description"
+                class="text-[15px] text-ink/80 leading-relaxed line-clamp-3 mb-6"
+              >
+                {{ company.description }}
+              </p>
+
+              <!-- Programme and website languages -->
+              <div class="mt-auto">
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-ink mb-2">Study programme</p>
+
+                    <div class="flex flex-wrap gap-2">
+                      <span
+                        v-for="programme in company.sourceProgrammes"
+                        :key="programme"
+                        class="max-w-full px-2.5 py-1 rounded-md bg-sky/35 text-ink text-xs leading-relaxed"
+                      >
+                        {{
+                          programme.toLowerCase() === 'multimediedesigner'
+                            ? 'Multimedia Design'
+                            : programme.toLowerCase() === 'datamatiker'
+                              ? 'Datamatiker / Computer Science'
+                              : programme
+                        }}
+                      </span>
+
+                      <span
+                        v-if="company.sourceProgrammes.length === 0"
+                        class="text-sm text-ink/65"
+                      >
+                        Not specified
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="xl:border-l xl:border-ink/15 xl:pl-4">
+                    <p class="text-sm font-semibold text-ink mb-2">Website language</p>
+
+                    <p class="text-sm text-ink/75 leading-relaxed">
+                      {{
+                        company.websiteLanguages.length
+                          ? company.websiteLanguages
+                              .map((language) => {
+                                if (language === 'en' || language === 'english') {
+                                  return 'English'
+                                }
+                                if (
+                                  language === 'dk' ||
+                                  language === 'da' ||
+                                  language === 'danish'
+                                ) {
+                                  return 'Danish'
+                                }
+                                return language.charAt(0).toUpperCase() + language.slice(1)
+                              })
+                              .join(', ')
+                          : 'Not specified'
+                      }}
+                    </p>
+                  </div>
                 </div>
 
-                <div class="pt-4 border-t border-white/50 flex justify-between items-center">
-                  <button
-                    @click="openDetails(company.id)"
-                    class="text-[#102a43] hover:text-[#78aacd] font-semibold text-sm flex items-center gap-1 cursor-pointer"
+                <!-- Company details link -->
+                <div class="border-t border-ink/10 pt-3">
+                  <RouterLink
+                    :to="`/company/${company.id}`"
+                    :aria-label="`View company: ${company.brandName}`"
+                    class="inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
                   >
-                    View Details &rarr;
-                  </button>
+                    View company
+                    <span aria-hidden="true">→</span>
+                  </RouterLink>
                 </div>
               </div>
-            </div>
+            </article>
           </div>
 
           <!-- Empty State -->
