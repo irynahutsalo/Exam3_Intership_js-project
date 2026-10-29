@@ -151,7 +151,7 @@ const handleLogin = () => {
     <!-- Bottom decoration -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 z-0">
       <img
-        src="/images/building-sun.png"
+        src="/images/building-sun.webp"
         alt=""
         draggable="false"
         class="block w-[280px] sm:w-[400px] lg:w-[480px] max-w-full h-auto"
