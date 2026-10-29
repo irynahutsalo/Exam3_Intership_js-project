@@ -61,6 +61,8 @@ Internship fields depend on the selected study programme. An empty internship fi
 | `src/utils/companyUrls.js` | Readable company names in URLs |
 | `src/data/companies.json` | Starting company dataset |
 | `public/images/` | Website illustrations |
+| `src/utils/exportCompaniesPdf.js
+| `src/data/studyProgrammes.js
 
 ## Pages and navigation
 
