@@ -8,7 +8,10 @@
       class="w-full min-h-[52px] px-4 py-3 bg-white border rounded-md flex items-center justify-between gap-3 text-left text-[15px] cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
       :class="isOpen ? 'border-brand-red' : 'border-ink/30 hover:border-ink/60'"
     >
-      <span class="min-w-0 font-medium" :class="modelValue ? 'text-ink' : 'text-ink/60'">
+      <span
+        class="min-w-0 break-words font-medium"
+        :class="modelValue ? 'text-ink' : 'text-ink/60'"
+      >
         {{ modelValue || placeholder }}
       </span>
 
@@ -41,7 +44,7 @@
           modelValue === option ? 'bg-brand-red/10 text-brand-red' : 'text-ink hover:bg-paper'
         "
       >
-        <span>{{ option }}</span>
+        <span class="min-w-0 break-words">{{ option }}</span>
 
         <!-- Checkmark identifies the selected option -->
         <svg

@@ -35,8 +35,8 @@
 
     <!-- Step 3: City selection (Compact scrollable container) -->
     <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center space-x-2">
+      <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 mb-2">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
           <label class="block text-[16px] font-bold text-text-main"> 3. Select cities </label>
           <span
             class="px-2.5 py-0.5 bg-white/60 text-[12px] rounded-full font-medium"
@@ -48,7 +48,7 @@
         <button
           @click="toggleSelectAllCities"
           type="button"
-          class="text-[14px] text-text-main/70 hover:text-text-main font-medium cursor-pointer transition-colors"
+          class="min-h-11 shrink-0 px-1 text-[14px] text-brand-red hover:underline underline-offset-4 font-medium cursor-pointer transition-colors"
         >
           {{ isAllCitiesSelected ? 'Deselect all' : 'Select all' }}
         </button>
@@ -59,19 +59,19 @@
 
       <!-- Scrollable container with reduced max-height -->
       <div class="max-h-[160px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-        <div class="grid grid-cols-2 gap-x-8 gap-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
           <label
             v-for="city in cities"
             :key="city"
-            class="flex items-center space-x-3 cursor-pointer text-[15px] text-text-main font-medium select-none"
+            class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
           >
             <input
               type="checkbox"
               :value="city"
               v-model="selectedCities"
-              class="w-4 h-4 rounded border-white/80 text-navy-dark focus:ring-0 cursor-pointer shrink-0"
+              class="w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
             />
-            <span class="truncate">{{ city }}</span>
+            <span class="min-w-0 break-words leading-5">{{ city }}</span>
           </label>
         </div>
       </div>
@@ -79,8 +79,8 @@
 
     <!-- Step 4: Internship fields dynamically filtered by study programme (Optional) -->
     <div v-if="selectedProgramme" class="mb-6 pt-6 border-t border-white/40">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex items-center space-x-2">
+      <div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-1 mb-2">
+        <div class="flex min-w-0 flex-wrap items-center gap-2">
           <label class="block text-[16px] font-bold text-text-main">
             4. What kind of internship are you looking for?
           </label>
@@ -94,7 +94,7 @@
         <button
           @click="toggleSelectAllFields"
           type="button"
-          class="text-[14px] text-text-main/70 hover:text-text-main font-medium cursor-pointer transition-colors"
+          class="min-h-11 shrink-0 px-1 text-[14px] text-brand-red hover:underline underline-offset-4 font-medium cursor-pointer transition-colors"
         >
           {{ isAllFieldsSelected ? 'Deselect all' : 'Select all' }}
         </button>
@@ -108,15 +108,15 @@
         <label
           v-for="field in availableInternshipFields"
           :key="field"
-          class="flex items-center space-x-3 cursor-pointer text-[15px] text-text-main font-medium select-none"
+          class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
         >
           <input
             type="checkbox"
             :value="field"
             v-model="selectedFields"
-            class="w-4 h-4 rounded border-white/80 text-navy-dark focus:ring-0 cursor-pointer"
+            class="w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
           />
-          <span>{{ field }}</span>
+          <span class="min-w-0 break-words leading-5">{{ field }}</span>
         </label>
       </div>
     </div>
@@ -133,17 +133,17 @@
         </span>
       </div>
 
-      <div class="flex items-center space-x-8">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
         <label
           v-for="lang in languages"
           :key="lang"
-          class="flex items-center space-x-3 cursor-pointer text-[15px] text-text-main font-medium select-none"
+          class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
         >
           <input
             type="checkbox"
             :value="lang"
             v-model="selectedLanguages"
-            class="w-4 h-4 rounded border-white/80 text-navy-dark focus:ring-0 cursor-pointer"
+            class="w-4 h-4 shrink-0 accent-brand-red cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-red"
           />
           <span>{{ lang }}</span>
         </label>
