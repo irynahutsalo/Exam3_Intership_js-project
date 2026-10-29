@@ -168,7 +168,6 @@
 </template>
 
 <script setup>
-import { studyProgrammes } from '@/data/studyProgrammes'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomSelect from './CustomSelect.vue'
@@ -184,7 +183,20 @@ const selectedCities = ref([])
 const selectedFields = ref([])
 const selectedLanguages = ref([])
 
-const institutions = ['SEA - Syddansk Erhvervsakademi']
+const institutions = ref(['SEA - Syddansk Erhvervsakademi'])
+
+const studyProgrammes = ref([
+  'Datamatiker / Computer Science',
+  'Multimedia Design',
+  'Marketing Management',
+  'Finansøkonom',
+  'Finansbachelor',
+  'Service & Experience Management',
+  'International Sales & Marketing',
+  'Production Technology',
+  'Bygningskonstruktør',
+  'Cyber Security',
+])
 
 // Dynamically collect unique cities from JSON file
 const cities = computed(() => {
@@ -211,7 +223,48 @@ const toggleSelectAllCities = () => {
   }
 }
 
-const languages = ['English', 'Danish']
+const programFieldsMap = {
+  'Multimedia Design': [
+    'UX/UI Design',
+    'Frontend Development',
+    'Graphic Design',
+    'Content Creation',
+    'Social Media',
+    'Web Content / CMS',
+    'Digital Marketing',
+  ],
+  'Datamatiker / Computer Science': [
+    'Frontend Development',
+    'Backend Development',
+    'Full-stack Development',
+    'Cyber Security',
+    'Database Management',
+  ],
+  'Marketing Management': [
+    'Digital Marketing',
+    'Social Media Management',
+    'Market Research',
+    'Customer Experience',
+    'Sales',
+  ],
+  'Service & Experience Management': [
+    'Customer Experience',
+    'Event Management',
+    'HR & People',
+    'Operations & Logistics',
+    'Project Management',
+  ],
+}
+
+const defaultFields = [
+  'Customer Experience',
+  'Event Management',
+  'HR & People',
+  'Operations & Logistics',
+  'Project Management',
+]
+
+const languages = ref(['English', 'Danish'])
 
 // Build the field list from companies in the selected programme.
 const availableInternshipFields = computed(() => {
