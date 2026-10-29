@@ -12,6 +12,7 @@ const companies = ref([])
 
 const selectedProgramme = ref('All programmes')
 const isProgrammeOpen = ref(false)
+const mobileFiltersOpen = ref(false)
 
 // Array for multiple selected cities (checkboxes)
 const selectedCities = ref([])
@@ -743,12 +744,33 @@ const downloadPDF = () => {
         />
       </section>
 
+      <button
+        type="button"
+        @click="mobileFiltersOpen = !mobileFiltersOpen"
+        :aria-expanded="mobileFiltersOpen"
+        aria-controls="company-filters"
+        class="lg:hidden flex w-full min-h-[48px] items-center justify-between gap-3 mb-4 px-4 py-3 bg-paper border border-ink/20 rounded-md text-ink font-semibold"
+      >
+        <span>
+          Filters
+          <span v-if="activeFilters.length" class="ml-1 text-brand-red">
+            ({{ activeFilters.length }})
+          </span>
+        </span>
+
+        <span aria-hidden="true">
+          {{ mobileFiltersOpen ? '−' : '+' }}
+        </span>
+      </button>
+
       <!-- Filters and results -->
       <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
         <!-- Left sidebar: filters -->
         <aside
+          id="company-filters"
           aria-label="Company filters"
-          class="min-w-0 bg-paper border border-ink/10 rounded-md p-5"
+          class="min-w-0 bg-paper border border-ink/10 rounded-md p-5 lg:block"
+          :class="mobileFiltersOpen ? 'block' : 'hidden'"
         >
           <!-- Filter heading and reset button -->
           <div class="flex items-center justify-between gap-3 mb-6">
@@ -855,6 +877,13 @@ const downloadPDF = () => {
               <span>Danish</span>
             </label>
           </fieldset>
+          <button
+            type="button"
+            @click="mobileFiltersOpen = false"
+            class="lg:hidden w-full min-h-[48px] mt-6 px-4 py-3 bg-brand-red text-white rounded-md font-semibold hover:bg-brand-red-hover"
+          >
+            Show companies ({{ filteredCompanies.length }})
+          </button>
         </aside>
 
         <!-- Right Content Area -->
@@ -942,7 +971,7 @@ const downloadPDF = () => {
           </div>
 
           <!-- Companies grid: 14 items per page -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6">
             <article
               v-for="company in paginatedCompanies"
               :key="company.id"
