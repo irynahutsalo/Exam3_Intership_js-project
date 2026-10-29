@@ -171,18 +171,32 @@ const removeFilter = (filter) => {
 
 const listStateReady = ref(false)
 
-const listQuery = computed(() => ({
-  ...route.query,
-  filters: JSON.stringify({
-    programme: selectedProgramme.value,
-    cities: selectedCities.value,
-    fields: selectedFields.value,
-    english: languageEnglish.value,
-    danish: languageDanish.value,
-    search: searchQuery.value,
-    page: currentPage.value,
-  }),
-}))
+const listQuery = computed(() => {
+  const hasFilters =
+    selectedProgramme.value !== 'All programmes' ||
+    selectedCities.value.length > 0 ||
+    selectedFields.value.length > 0 ||
+    languageEnglish.value ||
+    languageDanish.value ||
+    searchQuery.value.trim() !== ''
+
+  // Keep the first unfiltered page URL clean.
+  if (!hasFilters && currentPage.value === 1) {
+    return {}
+  }
+
+  return {
+    filters: JSON.stringify({
+      programme: selectedProgramme.value,
+      cities: selectedCities.value,
+      fields: selectedFields.value,
+      english: languageEnglish.value,
+      danish: languageDanish.value,
+      search: searchQuery.value,
+      page: currentPage.value,
+    }),
+  }
+})
 
 watch(
   listQuery,
@@ -236,8 +250,12 @@ onMounted(async () => {
     localStorage.setItem('companies_list', JSON.stringify(rawData))
   }
 
-  // Read saved filters passed from the home search card
+  // Read filters passed from the home page.
   const savedFilters = localStorage.getItem('user_search_filters')
+
+  // Remove them from storage after reading.
+  localStorage.removeItem('user_search_filters')
+
   if (savedFilters) {
     try {
       const parsed = JSON.parse(savedFilters)
@@ -411,15 +429,25 @@ watch(
   },
 )
 
+// Remember the list state without adding it to the company URL.
+const rememberCompanySearch = () => {
+  try {
+    sessionStorage.setItem('companies_return_query', JSON.stringify(listQuery.value))
+  } catch {
+    // Company navigation still works if storage is unavailable.
+  }
+}
+
 const openDetails = (id) => {
   const company = companies.value.find((item) => String(item.id) === String(id))
 
   if (!company) return
 
+  rememberCompanySearch()
+
   router.push({
     name: 'company-details',
     params: { slug: company.slug },
-    query: listQuery.value,
   })
 }
 
@@ -817,7 +845,7 @@ const downloadPDF = () => {
               <label
                 v-for="field in availableInternshipFields"
                 :key="field"
-                class="flex items-start gap-3 py-2 text-sm text-ink/85 cursor-pointer"
+                class="flex items-start gap-3 py-2 lg:py-1 text-sm text-ink/85 cursor-pointer"
               >
                 <input
                   v-model="selectedFields"
@@ -851,7 +879,7 @@ const downloadPDF = () => {
               <label
                 v-for="city in availableCities"
                 :key="city"
-                class="flex items-start gap-3 py-2 text-sm text-ink/85 cursor-pointer"
+                class="flex items-start gap-3 py-2 lg:py-1 text-sm text-ink/85 cursor-pointer"
               >
                 <input
                   v-model="selectedCities"
@@ -869,7 +897,7 @@ const downloadPDF = () => {
           <fieldset class="min-w-0">
             <legend class="text-[15px] font-semibold text-ink mb-3">Website language</legend>
 
-            <label class="flex items-center gap-3 py-2 text-sm text-ink/85 cursor-pointer">
+            <label class="flex items-center gap-3 py-2 lg:py-1 text-sm text-ink/85 cursor-pointer">
               <input
                 v-model="languageEnglish"
                 type="checkbox"
@@ -878,7 +906,7 @@ const downloadPDF = () => {
               <span>English</span>
             </label>
 
-            <label class="flex items-center gap-3 py-2 text-sm text-ink/85 cursor-pointer">
+            <label class="flex items-center gap-3 py-2 lg:py-1 text-sm text-ink/85 cursor-pointer">
               <input
                 v-model="languageDanish"
                 type="checkbox"
@@ -1071,8 +1099,8 @@ const downloadPDF = () => {
                     :to="{
                       name: 'company-details',
                       params: { slug: company.slug },
-                      query: listQuery,
                     }"
+                    @click="rememberCompanySearch"
                     :aria-label="`View company: ${company.brandName}`"
                     class="inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
                   >

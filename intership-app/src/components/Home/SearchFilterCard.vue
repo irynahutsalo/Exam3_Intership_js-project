@@ -59,11 +59,11 @@
 
       <!-- Scrollable container with reduced max-height -->
       <div class="max-h-[160px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 lg:gap-y-0">
           <label
             v-for="city in cities"
             :key="city"
-            class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
+            class="flex min-h-11 lg:min-h-7 min-w-0 items-center gap-3 py-2 lg:py-1 cursor-pointer text-[15px] text-ink font-medium select-none"
           >
             <input
               type="checkbox"
@@ -104,11 +104,11 @@
       </p>
 
       <!-- Dynamic Checkboxes Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 lg:gap-y-0">
         <label
           v-for="field in availableInternshipFields"
           :key="field"
-          class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
+          class="flex min-h-11 lg:min-h-7 min-w-0 items-center gap-3 py-2 lg:py-1 cursor-pointer text-[15px] text-ink font-medium select-none"
         >
           <input
             type="checkbox"
@@ -137,7 +137,7 @@
         <label
           v-for="lang in languages"
           :key="lang"
-          class="flex min-h-11 min-w-0 items-center gap-3 py-2 cursor-pointer text-[15px] text-ink font-medium select-none"
+          class="flex min-h-11 lg:min-h-7 min-w-0 items-center gap-3 py-2 lg:py-1 cursor-pointer text-[15px] text-ink font-medium select-none"
         >
           <input
             type="checkbox"

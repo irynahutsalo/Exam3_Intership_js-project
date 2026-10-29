@@ -82,26 +82,57 @@ const company = computed(() => {
   }
 })
 
-// Replace an old ID-based address with the readable company address.
+// Keep company URLs clean and support old links with filters or IDs.
 watch(
-  () => company.value?.slug,
-  (slug) => {
-    if (!slug || String(route.params.slug) === slug) return
+  () => [company.value?.slug, route.fullPath],
+  ([slug]) => {
+    if (!slug) return
+
+    // Preserve filters from an old shared company link.
+    if (typeof route.query.filters === 'string') {
+      try {
+        sessionStorage.setItem(
+          'companies_return_query',
+          JSON.stringify({ filters: route.query.filters }),
+        )
+      } catch {
+        // The company page can still open without saved search state.
+      }
+    }
+
+    const hasQuery = Object.keys(route.query).length > 0
+    const hasOldAddress = String(route.params.slug) !== slug
+
+    if (!hasQuery && !hasOldAddress) return
 
     router.replace({
       name: 'company-details',
       params: { slug },
-      query: route.query,
+      query: {},
       hash: route.hash,
     })
   },
   { immediate: true },
 )
 
-const backToCompanies = computed(() => ({
-  path: '/companies',
-  query: route.query,
-}))
+const backToCompanies = computed(() => {
+  let query = {}
+
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('companies_return_query') || '{}')
+
+    if (saved && typeof saved.filters === 'string') {
+      query = { filters: saved.filters }
+    }
+  } catch {
+    // Return to the full list if saved search state is unavailable.
+  }
+
+  return {
+    name: 'companies',
+    query,
+  }
+})
 
 const downloadPDF = () => window.print()
 </script>
