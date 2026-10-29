@@ -164,7 +164,7 @@
                   <td class="px-5 py-4">
                     <div class="flex flex-wrap gap-2">
                       <span
-                        v-for="programme in getProgrammesList(company)"
+                        v-for="programme in splitValues(company.sourceProgrammes)"
                         :key="programme"
                         class="bg-sky/30 px-2 py-1 rounded text-xs"
                       >
@@ -177,14 +177,17 @@
                         }}
                       </span>
 
-                      <span v-if="!getProgrammesList(company).length" class="text-ink/50">
+                      <span
+                        v-if="!splitValues(company.sourceProgrammes).length"
+                        class="text-ink/50"
+                      >
                         Not provided
                       </span>
                     </div>
                   </td>
 
                   <td class="px-5 py-4 text-ink/70">
-                    {{ getLanguagesList(company).join(', ') || 'Not provided' }}
+                    {{ splitValues(company.websiteLanguages).join(', ') || 'Not provided' }}
                   </td>
 
                   <td class="px-5 py-4">
@@ -455,7 +458,7 @@ onMounted(() => {
   } else {
     companies.value = initialCompaniesData.map((item) => ({
       ...item,
-      description: item.description || item['description'] || '',
+      description: item.description || '',
       status: item.status || 'active',
     }))
     localStorage.setItem('companies_list', JSON.stringify(companies.value))
@@ -465,28 +468,14 @@ onMounted(() => {
 const activeCount = computed(() => companies.value.filter((c) => c.status !== 'inactive').length)
 const inactiveCount = computed(() => companies.value.filter((c) => c.status === 'inactive').length)
 
-const getProgrammesList = (company) => {
-  if (!company.sourceProgrammes) return []
-  return company.sourceProgrammes
-    .split(/[,;]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-}
+// Split text into a list and remove empty values.
+const splitValues = (value) => {
+  if (!value) return []
 
-const getLanguagesList = (company) => {
-  if (!company.websiteLanguages) return []
-  return company.websiteLanguages
+  return value
     .split(/[,;]/)
-    .map((l) => l.trim())
+    .map((item) => item.trim())
     .filter(Boolean)
-}
-
-const formatLangCode = (code) => {
-  const clean = code.trim().toLowerCase()
-  if (clean === 'danish' || clean === 'da' || clean === 'dk') return 'DK'
-  if (clean === 'english' || clean === 'eng' || clean === 'en') return 'EN'
-  if (clean === 'german' || clean === 'de') return 'DE'
-  return code.slice(0, 2).toUpperCase()
 }
 
 const filteredCompanies = computed(() => {
