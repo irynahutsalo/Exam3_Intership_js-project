@@ -1,10 +1,12 @@
 <script setup>
-import { computed } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { computed, watch } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
+import { getCompanySlug } from '@/utils/companyUrls'
 import companiesData from '@/data/companies.json'
 import { getCompanyFields } from '@/utils/internshipFields'
 
 const route = useRoute()
+const router = useRouter()
 
 const splitValues = (value) => {
   const values = Array.isArray(value) ? value : [value || '']
@@ -51,11 +53,17 @@ const company = computed(() => {
     // Use the imported data if the saved list cannot be read.
   }
 
-  const item = data.find((entry) => String(entry.companyId) === String(route.params.id))
+  const requestedSlug = String(route.params.slug || '')
+
+  // Find by readable name, with support for old links containing an ID.
+  const item =
+    data.find((entry) => getCompanySlug(entry) === requestedSlug) ||
+    data.find((entry) => String(entry.companyId) === requestedSlug)
 
   if (!item) return null
 
   return {
+    slug: getCompanySlug(item),
     brandName: item.brandName || item['name (source / legal)'],
     city: String(item.city || '').trim(),
     description: String(item.description || '').trim(),
@@ -73,6 +81,22 @@ const company = computed(() => {
     fields: getCompanyFields(item),
   }
 })
+
+// Replace an old ID-based address with the readable company address.
+watch(
+  () => company.value?.slug,
+  (slug) => {
+    if (!slug || String(route.params.slug) === slug) return
+
+    router.replace({
+      name: 'company-details',
+      params: { slug },
+      query: route.query,
+      hash: route.hash,
+    })
+  },
+  { immediate: true },
+)
 
 const backToCompanies = computed(() => ({
   path: '/companies',
@@ -290,7 +314,7 @@ const downloadPDF = () => window.print()
     >
       <!-- Building and sun on the left -->
       <img
-        src="/images/building-sun.png"
+        src="/images/building-sun.webp"
         alt=""
         draggable="false"
         class="absolute bottom-0 left-0 w-[180px] sm:w-[320px] lg:w-[460px] max-w-[45%] h-auto"
@@ -298,7 +322,7 @@ const downloadPDF = () => window.print()
 
       <!-- Man on the right -->
       <img
-        src="/images/man-roof.png"
+        src="/images/man-roof.webp"
         alt=""
         draggable="false"
         class="block ml-auto w-[380px] sm:w-[540px] lg:w-[680px] max-w-[55%] h-auto"

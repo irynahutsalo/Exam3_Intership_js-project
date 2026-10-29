@@ -20,7 +20,7 @@ const router = createRouter({
       component: CompaniesView
     },
     {
-      path: '/company/:id',
+      path: '/company/:slug',
       name: 'company-details',
       component: CompanyDetailsView
     },

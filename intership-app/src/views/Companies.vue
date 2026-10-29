@@ -1,4 +1,5 @@
 <script setup>
+import { getCompanySlug } from '@/utils/companyUrls'
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
 import CustomSelect from '@/components/Home/CustomSelect.vue'
@@ -212,6 +213,7 @@ onMounted(async () => {
 
     return {
       id: item.companyId,
+      slug: getCompanySlug(item),
       brandName: item.brandName || item['name (source / legal)'],
       city: item.city ? item.city.trim() : '',
       description: item.description || item['description'] || '',
@@ -410,7 +412,15 @@ watch(
 )
 
 const openDetails = (id) => {
-  router.push(`/company/${id}`)
+  const company = companies.value.find((item) => String(item.id) === String(id))
+
+  if (!company) return
+
+  router.push({
+    name: 'company-details',
+    params: { slug: company.slug },
+    query: listQuery.value,
+  })
 }
 
 // Function to download filtered companies list as PDF using jsPDF
@@ -707,7 +717,7 @@ const downloadPDF = () => {
       class="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[200px] sm:h-[300px] lg:h-[400px] overflow-hidden"
     >
       <img
-        src="/images/building-sun.png"
+        src="/images/building-sun.webp"
         alt=""
         draggable="false"
         loading="lazy"
@@ -1058,7 +1068,11 @@ const downloadPDF = () => {
                 <!-- Company details link -->
                 <div class="border-t border-ink/10 pt-3">
                   <RouterLink
-                    :to="{ path: `/company/${company.id}`, query: listQuery }"
+                    :to="{
+                      name: 'company-details',
+                      params: { slug: company.slug },
+                      query: listQuery,
+                    }"
                     :aria-label="`View company: ${company.brandName}`"
                     class="inline-flex min-h-11 items-center gap-2 text-[15px] font-semibold text-brand-red hover:text-brand-red-hover hover:underline underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-red"
                   >
