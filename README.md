@@ -33,6 +33,7 @@ Internship fields depend on the selected study programme. An empty internship fi
 - Edit company information.
 - Change a company's status.
 - Delete a company after confirmation.
+- View overall dashboard statistics (total, active, and inactive company listings).
 
 ## Technologies
 
@@ -152,10 +153,10 @@ This publishes the website files. It does not publish company changes stored onl
 
 ## AI use and reflection
 
-I used ChatGPT to discuss the design, explain Vue code, improve responsive layouts and find errors.
+We used ChatGPT to discuss the design, explain Vue code, improve responsive layouts and find errors.
 
 One useful example was changing company URLs from technical IDs to readable company names.
 
-One suggestion needed further review: different pages used JSON and localStorage in different ways. This caused different city lists. I discussed the cause and the limits of local storage before deciding what to change.
+One suggestion needed further review: different pages used JSON and localStorage in different ways. This caused different city lists. We discussed the cause and the limits of local storage before deciding what to change.
 
-AI helped me work through problems step by step. I still needed to compare the code with the project requirements, test the website and understand how the solution worked.
+AI helped us work through problems step by step. We still needed to compare the code with the project requirements, test the website and understand how the solution worked.
