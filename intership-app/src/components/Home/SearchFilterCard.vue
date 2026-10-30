@@ -1,4 +1,6 @@
 <template>
+  <!-- Multi-step search form. Later steps appear only after the required
+       institution and programme selections have been made. -->
   <!-- Form panel with a solid background and red left border -->
   <div
     class="w-full max-w-[760px] mx-auto p-5 sm:p-8 lg:p-10 bg-paper text-ink border-l-4 border-brand-red rounded-md"
@@ -168,6 +170,8 @@
 </template>
 
 <script setup>
+// This component owns the home-page search form and passes the completed
+// filter state to the companies page through localStorage and the router.
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import CustomSelect from './CustomSelect.vue'
@@ -175,8 +179,10 @@ import companiesData from '@/data/companies.json'
 import { getAvailableFields } from '@/utils/internshipFields'
 
 const router = useRouter()
+// activeDropdown guarantees that only one custom select is open at a time.
 const activeDropdown = ref(null)
 
+// Reactive form values are bound to the controls with v-model.
 const selectedInstitution = ref('')
 const selectedProgramme = ref('')
 const selectedCities = ref([])
@@ -198,7 +204,8 @@ const studyProgrammes = ref([
   'Cyber Security',
 ])
 
-// Dynamically collect unique cities from JSON file
+// Build the city options from the data source rather than maintaining a
+// duplicate hard-coded list.
 const cities = computed(() => {
   const citySet = new Set()
   companiesData.forEach((item) => {
@@ -210,12 +217,13 @@ const cities = computed(() => {
   return Array.from(citySet).sort()
 })
 
-// Toggle select all / deselect all for cities
+// Reflect whether every available city is selected.
 const isAllCitiesSelected = computed(() => {
   return cities.value.length > 0 && selectedCities.value.length === cities.value.length
 })
 
 const toggleSelectAllCities = () => {
+  // Select all values or clear the array, depending on the current state.
   if (isAllCitiesSelected.value) {
     selectedCities.value = []
   } else {
@@ -266,7 +274,7 @@ const defaultFields = [
 
 const languages = ref(['English', 'Danish'])
 
-// Build the field list from companies in the selected programme.
+// Derive relevant internship fields from the shared data utility.
 const availableInternshipFields = computed(() => {
   if (!selectedProgramme.value) return []
 
@@ -281,6 +289,7 @@ const isAllFieldsSelected = computed(() => {
 })
 
 const toggleSelectAllFields = () => {
+  // Select all currently available fields or remove the whole selection.
   if (isAllFieldsSelected.value) {
     selectedFields.value = []
   } else {
@@ -289,10 +298,12 @@ const toggleSelectAllFields = () => {
 }
 
 const toggleDropdown = (name) => {
+  // Clicking the active dropdown closes it; clicking another switches focus.
   activeDropdown.value = activeDropdown.value === name ? null : name
 }
 
 const handleInstitutionSelect = () => {
+  // A new institution invalidates dependent selections, so reset them.
   activeDropdown.value = null
   selectedProgramme.value = ''
   selectedCities.value = []
@@ -300,6 +311,7 @@ const handleInstitutionSelect = () => {
 }
 
 const handleProgrammeSelect = () => {
+  // Programme changes also reset programme-dependent city and field choices.
   activeDropdown.value = null
   selectedCities.value = []
   selectedFields.value = []
@@ -310,6 +322,7 @@ const isFormValid = computed(() => {
 })
 
 const handleSubmit = () => {
+  // Do not navigate until the required steps are complete.
   if (!isFormValid.value) return
 
   const filterState = {
@@ -319,8 +332,10 @@ const handleSubmit = () => {
     fields: selectedFields.value,
     languages: selectedLanguages.value,
   }
+  // Store the search as a one-time handoff for the companies page.
   localStorage.setItem('user_search_filters', JSON.stringify(filterState))
 
+  // Navigate without reloading the application.
   router.push('/companies')
 }
 </script>

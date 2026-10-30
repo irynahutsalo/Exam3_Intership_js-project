@@ -1,13 +1,18 @@
 <script setup>
+// Details page resolves one company from the route, normalizes its values,
+// preserves the previous search, and exposes safe contact links.
 import { computed, watch } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { getCompanySlug } from '@/utils/companyUrls'
 import companiesData from '@/data/companies.json'
 import { getCompanyFields } from '@/utils/internshipFields'
 
+
+// Router utilities provide the requested slug and navigation targets.
 const route = useRoute()
 const router = useRouter()
 
+// Normalize source values that may contain several comma- or semicolon-separated entries.
 const splitValues = (value) => {
   const values = Array.isArray(value) ? value : [value || '']
 
@@ -17,6 +22,7 @@ const splitValues = (value) => {
     .filter(Boolean)
 }
 
+// Accept only HTTP(S) links so external navigation is predictable and safe.
 const safeWebsite = (value) => {
   const text = String(value || '').trim()
   if (!text) return ''
@@ -30,11 +36,13 @@ const safeWebsite = (value) => {
   }
 }
 
+// Convert source programme codes into labels suitable for the user interface.
 const programmeLabels = {
   datamatiker: 'Datamatiker / Computer Science',
   multimediedesigner: 'Multimedia Design',
 }
 
+// Convert language codes into readable language names.
 const languageLabels = {
   en: 'English',
   english: 'English',
@@ -43,6 +51,8 @@ const languageLabels = {
   danish: 'Danish',
 }
 
+// Resolve the requested company from localStorage when available, falling back
+// to bundled data, then return one normalized object for the template.
 const company = computed(() => {
   let data = companiesData
 
@@ -82,7 +92,7 @@ const company = computed(() => {
   }
 })
 
-// Keep company URLs clean and support old links with filters or IDs.
+// Normalize legacy or shared links while preserving the user's return-to-list state.
 watch(
   () => [company.value?.slug, route.fullPath],
   ([slug]) => {
@@ -105,6 +115,7 @@ watch(
 
     if (!hasQuery && !hasOldAddress) return
 
+    // Clean up query parameters and standardize the URL structure
     router.replace({
       name: 'company-details',
       params: { slug },
@@ -115,6 +126,7 @@ watch(
   { immediate: true },
 )
 
+// Build a back link that restores the filters saved before opening this profile.
 const backToCompanies = computed(() => {
   let query = {}
 
@@ -134,15 +146,18 @@ const backToCompanies = computed(() => {
   }
 })
 
+// Printing uses the browser's print styles to create a PDF-friendly profile.
 const downloadPDF = () => window.print()
 </script>
 
 <template>
+  <!-- Company profile page with navigation, normalized information panels,
+       contact actions, and a not-found fallback. -->
   <main
     class="company-details relative isolate min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-0"
   >
     <div class="relative z-10 max-w-[var(--width-content)] mx-auto">
-      <!-- Navigation and print -->
+      <!-- Return navigation and print/export action. -->
       <div class="page-actions flex flex-wrap items-center justify-between gap-3 mb-8">
         <RouterLink
           :to="backToCompanies"
@@ -162,7 +177,7 @@ const downloadPDF = () => window.print()
         </button>
       </div>
 
-      <!-- Page title -->
+      <!-- Profile heading identifies the selected company before its details. -->
       <div class="relative mb-3">
         <p class="text-[14px] sm:text-[16px] font-medium text-ink/60">Company details</p>
 
@@ -175,6 +190,7 @@ const downloadPDF = () => window.print()
         />
       </div>
 
+      <!-- Render the full profile only after the route has resolved a company. -->
       <template v-if="company">
         <div class="mb-7 sm:mb-9 md:pr-[280px] lg:pr-[360px]">
           <h1
@@ -188,12 +204,15 @@ const downloadPDF = () => window.print()
           </p>
         </div>
 
+        <!-- Main information panel and contact sidebar adapt to screen width. -->
         <div class="details-grid grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <!-- Company information -->
+          <!-- Descriptive and classification information about the company. -->
           <section
             aria-label="Company information"
             class="details-panel lg:col-span-2 bg-paper border border-ink/10 rounded-md p-6 sm:p-8"
           >
+
+          <!-- About company section -->
             <div class="pb-6">
               <h3 class="text-xl font-semibold mb-3">About the company</h3>
 
@@ -202,6 +221,7 @@ const downloadPDF = () => window.print()
               </p>
             </div>
 
+            <!-- Study programme tags section -->
             <div class="border-t border-ink/15 py-6">
               <h3 class="text-xl font-semibold mb-4">Study programme</h3>
 
@@ -218,6 +238,7 @@ const downloadPDF = () => window.print()
               <p v-else class="text-ink/60">Not provided</p>
             </div>
 
+            <!-- Internship fields tags section -->
             <div class="border-t border-ink/15 py-6">
               <h3 class="text-xl font-semibold mb-4">Internship fields</h3>
 
@@ -236,6 +257,7 @@ const downloadPDF = () => window.print()
               </p>
             </div>
 
+            <!-- Website languages section -->
             <div class="border-t border-ink/15 pt-6">
               <h3 class="text-xl font-semibold mb-3">Website language</h3>
               <p class="text-ink/80">
@@ -244,7 +266,7 @@ const downloadPDF = () => window.print()
             </div>
           </section>
 
-          <!-- Contact information -->
+          <!-- Contact panel turns available values into actionable links. -->
           <aside
             aria-label="Company contact details"
             class="details-panel bg-paper border border-ink/10 rounded-md p-6 sm:p-8"
@@ -252,6 +274,8 @@ const downloadPDF = () => window.print()
             <h3 class="text-xl font-semibold mb-6">Get in touch</h3>
 
             <dl class="space-y-5 text-[15px]">
+
+              <!-- Website link item -->
               <div>
                 <dt class="text-sm text-ink/60 mb-1">Website</dt>
                 <dd class="break-words">
@@ -268,6 +292,7 @@ const downloadPDF = () => window.print()
                 </dd>
               </div>
 
+              <!-- Email link item -->
               <div>
                 <dt class="text-sm text-ink/60 mb-1">Email</dt>
                 <dd class="break-words">
@@ -282,6 +307,7 @@ const downloadPDF = () => window.print()
                 </dd>
               </div>
 
+              <!-- Phone link item -->
               <div>
                 <dt class="text-sm text-ink/60 mb-1">Phone</dt>
                 <dd>
@@ -295,7 +321,8 @@ const downloadPDF = () => window.print()
                   <span v-else class="text-ink/60">Not provided</span>
                 </dd>
               </div>
-
+              
+              <!-- Address item -->
               <div>
                 <dt class="text-sm text-ink/60 mb-1">Address</dt>
                 <dd class="leading-relaxed">
@@ -333,12 +360,14 @@ const downloadPDF = () => window.print()
         </div>
       </template>
 
+      <!-- Explicit fallback for an unknown or outdated company slug. -->
       <section v-else class="bg-paper rounded-md border border-ink/10 p-8">
         <h2 class="text-2xl font-semibold mb-3">Company not found</h2>
         <p class="text-ink/70">Return to the company list and select another company.</p>
       </section>
     </div>
-    <!-- Decorative images below the company information -->
+
+    <!-- Decorative footer artwork is visual-only and excluded from assistive tech. -->
     <div
       aria-hidden="true"
       class="decoration pointer-events-none relative z-0 -mt-[10px] -mx-4 sm:-mx-6"
@@ -363,6 +392,7 @@ const downloadPDF = () => window.print()
 </template>
 
 <style scoped>
+/* Styles optimized for paper printouts and PDF exports */
 @media print {
   .page-actions,
   .decoration {

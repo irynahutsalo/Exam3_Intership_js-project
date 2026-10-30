@@ -1,4 +1,5 @@
 <template>
+  <!-- Persistent site header that provides the main navigation on every page. -->
   <header class="w-full border-b border-ink/25 text-ink">
     <!-- Centered container; links wrap on small screens -->
     <div
@@ -36,5 +37,6 @@
 </template>
 
 <script setup>
+// RouterLink provides client-side navigation without full page reloads.
 import { RouterLink } from 'vue-router'
 </script>

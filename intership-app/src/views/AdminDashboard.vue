@@ -1,8 +1,10 @@
 <template>
+  <!-- Protected administration workspace for searching, reviewing, creating,
+       editing, activating, and deleting company records. -->
   <div class="min-h-screen bg-sky text-ink">
     <main class="px-4 sm:px-6 py-8">
       <div class="max-w-[var(--width-content)] mx-auto">
-        <!-- Navigation -->
+        <!-- Navigation returns to the public directory or ends the admin session. -->
         <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
           <router-link
             to="/companies"
@@ -21,7 +23,7 @@
           </button>
         </div>
 
-        <!-- Heading -->
+        <!-- Dashboard heading and primary action for creating a new record. -->
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
           <div>
             <p class="text-sm font-medium text-ink/60 mb-3">Admin workspace</p>
@@ -46,7 +48,7 @@
           </button>
         </div>
 
-        <!-- Statistics -->
+        <!-- Reactive summary cards show the current total and status distribution. -->
         <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div class="bg-paper border border-ink/10 rounded-md p-5">
             <dt class="text-sm text-ink/65">Total companies</dt>
@@ -70,7 +72,7 @@
           </div>
         </dl>
 
-        <!-- Search and filters -->
+        <!-- Search and status controls narrow the table without changing stored data. -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
           <div class="w-full lg:max-w-[440px]">
             <label for="admin-company-search" class="sr-only">
@@ -114,7 +116,7 @@
           {{ filteredCompanies.length === 1 ? 'company found' : 'companies found' }}
         </p>
 
-        <!-- Company table -->
+        <!-- Responsive management table presents normalized company data and actions. -->
         <div class="bg-paper border border-ink/15 rounded-md overflow-hidden">
           <div
             class="overflow-x-auto"
@@ -237,8 +239,7 @@
       </div>
     </main>
 
-    <!-- MODAL WINDOW (FULLSCREEN FIXED) -->
-    <!-- Company editor -->
+    <!-- Modal editor keeps create and edit workflows in one reusable form. -->
     <div
       v-if="isModalOpen"
       class="fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50 p-4"
@@ -356,6 +357,8 @@
 </template>
 
 <script setup>
+// The dashboard is the CRUD interface for the company directory. It keeps
+// records in localStorage so changes are available to the public pages.
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import initialCompaniesData from '@/data/companies.json'
@@ -366,7 +369,8 @@ const companies = ref([])
 const searchQuery = ref('')
 const statusFilter = ref('all')
 
-// Modal state
+// Modal state determines whether the editor is open and whether it is creating
+// a new record or updating an existing one.
 const isModalOpen = ref(false)
 const isEditing = ref(false)
 const emptyCompanyForm = () => ({
@@ -388,6 +392,7 @@ const emptyCompanyForm = () => ({
 const form = ref(emptyCompanyForm())
 const saveError = ref('')
 
+// Configuration-driven form fields avoid duplicating label, type, and hint markup.
 const formFields = [
   {
     key: 'brandName',
@@ -449,6 +454,7 @@ const formFields = [
 ]
 
 onMounted(() => {
+  // Restore admin data from localStorage or initialize it from the bundled dataset.
   const saved = localStorage.getItem('companies_list')
   if (saved) {
     companies.value = JSON.parse(saved)
@@ -465,6 +471,7 @@ onMounted(() => {
 const activeCount = computed(() => companies.value.filter((c) => c.status !== 'inactive').length)
 const inactiveCount = computed(() => companies.value.filter((c) => c.status === 'inactive').length)
 
+// Convert delimited source strings into arrays for table badges.
 const getProgrammesList = (company) => {
   if (!company.sourceProgrammes) return []
   return company.sourceProgrammes
@@ -482,6 +489,7 @@ const getLanguagesList = (company) => {
 }
 
 const formatLangCode = (code) => {
+  // Normalize common language names and codes for compact display.
   const clean = code.trim().toLowerCase()
   if (clean === 'danish' || clean === 'da' || clean === 'dk') return 'DK'
   if (clean === 'english' || clean === 'eng' || clean === 'en') return 'EN'
@@ -490,6 +498,7 @@ const formatLangCode = (code) => {
 }
 
 const filteredCompanies = computed(() => {
+  // Apply both text search and the selected listing-status filter.
   return companies.value.filter((company) => {
     const name = (company.brandName || company['name (source / legal)'] || '').toLowerCase()
     const city = (company.city || '').toLowerCase()
@@ -509,6 +518,7 @@ const filteredCompanies = computed(() => {
 })
 
 const deleteCompany = (id) => {
+  // Ask for confirmation before permanently removing a local record.
   if (confirm('Are you sure you want to delete this company?')) {
     companies.value = companies.value.filter((c) => c.companyId !== id)
     localStorage.setItem('companies_list', JSON.stringify(companies.value))
@@ -516,6 +526,7 @@ const deleteCompany = (id) => {
 }
 
 const openCreateModal = () => {
+  // Start with a blank form and generate a unique id for the new company.
   isEditing.value = false
   saveError.value = ''
   form.value = {
@@ -526,6 +537,8 @@ const openCreateModal = () => {
 }
 
 const editCompany = (company) => {
+  // Copy the selected record into editable text fields without mutating the
+  // table entry until the user submits the form.
   isEditing.value = true
   saveError.value = ''
 
@@ -558,6 +571,7 @@ const closeModal = () => {
 }
 
 const saveCompany = () => {
+  // Validate required fields and external links before writing the record.
   saveError.value = ''
 
   const brandName = form.value.brandName.trim()
@@ -603,6 +617,7 @@ const saveCompany = () => {
   let updatedCompanies
 
   if (isEditing.value) {
+    // Replace only the matching record while preserving all other companies.
     const index = companies.value.findIndex((company) => company.companyId === form.value.companyId)
 
     if (index === -1) {
@@ -614,10 +629,13 @@ const saveCompany = () => {
       return companyIndex === index ? { ...company, ...updatedFields } : company
     })
   } else {
+    // Put newly created companies at the beginning of the directory.
     updatedCompanies = [updatedFields, ...companies.value]
   }
 
   try {
+    // Persist first, then update the reactive list so the UI reflects a
+    // successfully stored change.
     localStorage.setItem('companies_list', JSON.stringify(updatedCompanies))
     companies.value = updatedCompanies
     closeModal()
@@ -627,6 +645,7 @@ const saveCompany = () => {
 }
 
 const logout = () => {
+  // Remove the local session flag and return to the login page.
   localStorage.removeItem('is_admin_logged')
   router.push('/admin')
 }

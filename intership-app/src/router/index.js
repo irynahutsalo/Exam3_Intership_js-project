@@ -1,3 +1,4 @@
+// Import the page components used by the application's route table.
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import CompaniesView from '../views/Companies.vue'
@@ -5,7 +6,8 @@ import CompanyDetailsView from '../views/CompanyDetails.vue'
 import AdminLogin from '../views/AdminLogin.vue' // Admin login page
 import AdminDashboard from '../views/AdminDashboard.vue' // Protected admin dashboard page
 
-// Define all application routes
+// Define all application routes. Named routes allow components to navigate
+// without hard-coding URL strings throughout the application.
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -38,16 +40,17 @@ const router = createRouter({
   ]
 })
 
-// Global navigation guard to secure admin routes
+// Protect private routes before every navigation.
 router.beforeEach((to, from, next) => {
-  // Check if the user is authenticated by looking into localStorage
+  // The current demo authentication flag is stored locally in the browser.
   const isAuthenticated = localStorage.getItem('is_admin_logged') === 'true'
 
-  // If the route requires authentication and the user is not logged in, redirect to admin login
+  // Redirect unauthenticated users away from the dashboard.
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/admin')
   } else {
-    next() // Proceed to the requested route normally
+    // Continue to the requested route when it is public or authenticated.
+    next()
   }
 })
 

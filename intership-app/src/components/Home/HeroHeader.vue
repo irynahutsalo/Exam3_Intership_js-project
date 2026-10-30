@@ -1,4 +1,5 @@
 <template>
+  <!-- Introductory home-page section that explains the application's purpose. -->
   <section
     class="max-w-[var(--width-content)] mx-auto px-4 sm:px-6 pt-10 sm:pt-14 lg:pt-16 pb-7 sm:pb-9"
   >

@@ -1,8 +1,10 @@
 <template>
+  <!-- Home page combines decorative artwork with the hero and search workflow. -->
+  <!-- Main layout container with responsive bottom padding for background illustrations -->
   <main class="relative isolate min-h-screen pb-16 sm:pb-24 lg:pb-[180px]">
-    <!-- Decorative collage -->
+    <!-- Decorative collage background layer (hidden on small screens, visible on large screens) -->
     <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-      <!-- Large hand with a paper plane -->
+      <!-- Top-right decorative illustration: Hand with a paper plane -->
       <img
         src="/images/hand-plane.webp"
         alt=""
@@ -31,6 +33,7 @@
     <div class="relative z-10">
       <HeroHeader />
 
+      <!-- Centered container wrapping the main interactive search and filter card -->
       <div class="px-4 sm:px-6">
         <SearchFilterCard />
       </div>
@@ -39,6 +42,7 @@
 </template>
 
 <script setup>
+// Compose the home page from focused presentational and form components.
 import HeroHeader from '../components/Home/HeroHeader.vue'
 import SearchFilterCard from '../components/Home/SearchFilterCard.vue'
 </script>

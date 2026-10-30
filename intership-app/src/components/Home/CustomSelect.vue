@@ -1,4 +1,6 @@
 <template>
+  <!-- Reusable accessible dropdown. The parent owns the selected value and
+       open state, while this component emits user actions upward. -->
   <div class="relative w-full">
     <!-- Button that opens and closes the dropdown -->
     <button
@@ -69,6 +71,7 @@
 </template>
 
 <script setup>
+// Props make the select reusable for different option lists and form fields.
 defineProps({
   modelValue: String,
   placeholder: String,
@@ -78,7 +81,8 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue', 'toggle', 'select'])
 
-// Update the value and notify the parent component.
+// Emit both the v-model update and a selection event so the parent can close
+// the dropdown or perform additional field-specific cleanup.
 const selectOption = (option) => {
   emit('update:modelValue', option)
   emit('select', option)

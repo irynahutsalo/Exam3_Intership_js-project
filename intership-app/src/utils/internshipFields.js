@@ -1,4 +1,4 @@
-// Display names for the field codes used in companies.json.
+// Translate normalized field slugs from the data file into labels shown to users.
 const fieldLabels = {
   'frontend-development': 'Frontend Development',
   'backend-development': 'Backend Development',
@@ -16,13 +16,13 @@ const fieldLabels = {
   other: 'Other'
 }
 
-// Programme codes actually present in the current JSON file.
+// Map user-facing programme names to the source codes used in company records.
 const programmeCodes = {
   'Multimedia Design': 'multimediedesigner',
   'Datamatiker / Computer Science': 'datamatiker'
 }
 
-// Fields relevant to each study programme.
+// Define which internship fields are relevant to each supported programme.
 const programmeFields = {
   'Multimedia Design': [
     'UX/UI Design',
@@ -45,7 +45,7 @@ const programmeFields = {
   ]
 }
 
-// Split a source value into separate entries.
+// Convert arrays or delimited strings into trimmed, lowercase values.
 const splitValues = (value) => {
   const values = Array.isArray(value) ? value : [value ?? '']
 
@@ -59,6 +59,7 @@ const splitValues = (value) => {
 
 // Read every field assigned to a company.
 // An empty value belongs to Other.
+// Return readable, unique internship fields for one company.
 export const getCompanyFields = (company) => {
   const codes = splitValues(
     company['internshipFieldSlugs (optional)']
@@ -71,7 +72,7 @@ export const getCompanyFields = (company) => {
   )]
 }
 
-// Use the same programme matching on both pages.
+// Keep programme matching consistent across the home and companies pages.
 export const matchesStudyProgramme = (company, programme) => {
   if (!programme || programme === 'All programmes') return true
 
@@ -80,12 +81,11 @@ export const matchesStudyProgramme = (company, programme) => {
   return splitValues(company.sourceProgrammes).includes(code)
 }
 
-// Build the checkbox list from companies in the selected programme.
-// Show only programme-relevant fields that exist in the company data.
+// Build the checkbox list from fields that actually exist in matching records.
 export const getAvailableFields = (companies, programme) => {
   const existingFields = new Set()
 
-  // Collect fields from companies matching the selected programme.
+  // First collect the fields present in the current data set.
   companies
     .filter(company => matchesStudyProgramme(company, programme))
     .forEach(company => {
@@ -94,7 +94,7 @@ export const getAvailableFields = (companies, programme) => {
       })
     })
 
-  // Without a programme filter, show all fields from the data.
+  // Without a programme filter, expose every discovered field.
   if (!programme || programme === 'All programmes') {
     const fields = [...existingFields]
       .filter(field => field !== 'Other')
@@ -107,7 +107,7 @@ export const getAvailableFields = (companies, programme) => {
     return fields
   }
 
-  // Keep only fields relevant to the selected programme.
+  // With a programme selected, retain only fields relevant to it.
   const allowedFields = programmeFields[programme] || []
 
   const fields = allowedFields.filter(field =>

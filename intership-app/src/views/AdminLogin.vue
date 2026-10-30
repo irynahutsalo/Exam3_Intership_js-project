@@ -1,4 +1,6 @@
 <script setup>
+// Login page manages the demo admin credentials and redirects successful
+// authentication to the protected dashboard.
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 
@@ -9,6 +11,8 @@ const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
 
+// Validate the submitted credentials, store the session flag, or expose a
+// clear error message that is announced by the template.
 const handleLogin = () => {
   errorMessage.value = ''
 
@@ -22,6 +26,7 @@ const handleLogin = () => {
 </script>
 
 <template>
+  <!-- Admin sign-in page with responsive layout and decorative artwork. -->
   <main
     class="relative isolate min-h-[calc(100vh-64px)] bg-sky text-ink px-4 sm:px-6 pt-8 pb-[200px] sm:pb-[260px]"
   >
@@ -35,7 +40,7 @@ const handleLogin = () => {
       </RouterLink>
 
       <div class="relative max-w-[480px] mx-auto mt-8 sm:mt-12">
-        <!-- Page heading -->
+        <!-- Heading explains the purpose of this protected area. -->
         <div class="mb-7">
           <p class="text-sm font-medium text-ink/60 mb-3">Find Your Internship</p>
 
@@ -49,7 +54,7 @@ const handleLogin = () => {
           <p class="mt-4 text-base text-ink/75">Sign in to manage company information.</p>
         </div>
 
-        <!-- Decorative plane -->
+        <!-- Decorative image is hidden from assistive technologies. -->
         <img
           src="/images/paper-plane-trail.svg"
           alt=""
@@ -58,7 +63,7 @@ const handleLogin = () => {
           class="pointer-events-none absolute hidden xl:block w-[220px] h-auto top-0 left-full ml-10"
         />
 
-        <!-- Login form -->
+        <!-- Semantic form enables keyboard submission and native input validation. -->
         <section
           aria-labelledby="login-heading"
           class="bg-paper border border-ink/10 border-l-4 border-l-brand-red rounded-md p-6 sm:p-8"
@@ -135,7 +140,8 @@ const handleLogin = () => {
             </button>
           </form>
 
-          <!-- Existing demo access -->
+          <!-- Demo credentials are displayed because this project uses local
+               storage authentication instead of a backend identity service. -->
           <div class="mt-6 pt-5 border-t border-ink/15">
             <p class="text-sm font-semibold text-ink/70 mb-2">Demo access</p>
 
@@ -148,7 +154,7 @@ const handleLogin = () => {
       </div>
     </div>
 
-    <!-- Bottom decoration -->
+    <!-- Decorative image does not affect the form or its accessibility tree. -->
     <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 z-0">
       <img
         src="/images/building-sun.png"

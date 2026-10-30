@@ -1,4 +1,6 @@
 <script setup>
+// This component displays the searchable company directory and keeps the selected
+// filters, pagination, navigation, and PDF export in sync with the user interface.
 import { getCompanySlug } from '@/utils/companyUrls'
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { useRouter, useRoute, RouterLink } from 'vue-router'
@@ -7,26 +9,33 @@ import companiesData from '@/data/companies.json'
 import jsPDF from 'jspdf'
 import { getCompanyFields, getAvailableFields } from '@/utils/internshipFields'
 
+// Vue Router is used both to open company details and to persist the current
+// directory state in the URL, so the list can be restored after navigation.
 const router = useRouter()
 const route = useRoute()
+
+// The raw data is normalized into this reactive collection when the component mounts.
+// Updating the ref automatically recalculates all dependent computed properties.
 const companies = ref([])
 
+// These refs represent the values controlled by the filters in the sidebar.
 const selectedProgramme = ref('All programmes')
 const isProgrammeOpen = ref(false)
 const mobileFiltersOpen = ref(false)
 
-// Array for multiple selected cities (checkboxes)
+// Multiple cities can be selected at once because the city filter is rendered as checkboxes.
 const selectedCities = ref([])
 
 const selectedFields = ref([])
 const languageEnglish = ref(false)
 const languageDanish = ref(false)
 
-// Search and Pagination states
+// Search and pagination state controls which subset of the filtered collection is visible.
 const searchQuery = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 14
 
+// These are the programme options presented to the user in the custom select control.
 const studyProgrammes = [
   'Datamatiker / Computer Science',
   'Multimedia Design',
@@ -40,7 +49,8 @@ const studyProgrammes = [
   'Cyber Security',
 ]
 
-// Dynamically collect unique cities from available companies
+// Build a sorted list of unique cities from the loaded companies.
+// A computed value ensures the checkbox list changes automatically when data changes.
 const availableCities = computed(() => {
   const citySet = new Set()
   companies.value.forEach((c) => {
@@ -52,6 +62,9 @@ const availableCities = computed(() => {
   return Array.from(citySet).sort()
 })
 
+// This map documents the fields that are normally associated with each programme.
+// The shared internship-field utility is used below so the same rules are used
+// on the home page and on this directory page.
 const programFieldsMap = {
   'Multimedia Design': [
     'UX/UI Design',
@@ -93,12 +106,13 @@ const defaultFields = [
   'Project Management',
 ]
 
-// Use the same programme-specific field list as the home page.
+// Ask the shared utility for fields relevant to the currently selected programme.
 const availableInternshipFields = computed(() => {
   return getAvailableFields(companiesData, selectedProgramme.value)
 })
 
-// Reset selected fields when the study programme changes.
+// Programme changes can make previously selected fields invalid, so clear the
+// field checkboxes immediately and prevent stale combinations of filters.
 watch(
   selectedProgramme,
   () => {
@@ -107,7 +121,8 @@ watch(
   { flush: 'sync' },
 )
 
-// Collect selected filters for the removable chips.
+// Convert the internal filter state into a single list used by the removable
+// filter chips above the results. This keeps the visual summary in one place.
 const activeFilters = computed(() => {
   const filters = []
 
@@ -154,7 +169,8 @@ const activeFilters = computed(() => {
   return filters
 })
 
-// Remove the selected filter and update its control.
+// Remove one filter chip and update the corresponding form control.
+// The result list then updates through Vue's reactivity system.
 const removeFilter = (filter) => {
   if (filter.type === 'programme') {
     selectedProgramme.value = 'All programmes'
@@ -169,8 +185,12 @@ const removeFilter = (filter) => {
   }
 }
 
+// This flag prevents the URL watcher from overwriting the URL before the initial
+// state has been restored from localStorage and the current route.
 const listStateReady = ref(false)
 
+// Serialize the complete list state into a route query.
+// The first unfiltered page intentionally has no query parameter, producing a clean URL.
 const listQuery = computed(() => {
   const hasFilters =
     selectedProgramme.value !== 'All programmes' ||
@@ -180,7 +200,6 @@ const listQuery = computed(() => {
     languageDanish.value ||
     searchQuery.value.trim() !== ''
 
-  // Keep the first unfiltered page URL clean.
   if (!hasFilters && currentPage.value === 1) {
     return {}
   }
@@ -198,6 +217,8 @@ const listQuery = computed(() => {
   }
 })
 
+// Whenever a user changes a filter, search term, or page, replace the current
+// query instead of adding a new browser-history entry for every small change.
 watch(
   listQuery,
   (query) => {
@@ -208,14 +229,18 @@ watch(
   { flush: 'post' },
 )
 
+// Load and restore all directory state after the component is mounted.
 onMounted(async () => {
-  // Scroll to the top of the page smoothly on mount
+  // Start the directory at the top so navigation from another page is predictable.
   window.scrollTo({ top: 0, behavior: 'smooth' })
 
-  // Load companies state
+  // Prefer the locally saved dataset when available; otherwise use the bundled JSON.
+  // This also allows the application to reuse data prepared by another page.
   const saved = localStorage.getItem('companies_list')
   const rawData = saved ? JSON.parse(saved) : companiesData
 
+  // Normalize inconsistent source fields into one stable object shape used by
+  // filtering, cards, links, and the PDF exporter.
   companies.value = rawData.map((item) => {
     let progs = []
     if (item.sourceProgrammes) {
@@ -246,14 +271,16 @@ onMounted(async () => {
     }
   })
 
+  // Cache the bundled dataset so subsequent visits use the same source consistently.
   if (!saved) {
     localStorage.setItem('companies_list', JSON.stringify(rawData))
   }
 
-  // Read filters passed from the home page.
+  // Read filters passed from the home page through localStorage.
   const savedFilters = localStorage.getItem('user_search_filters')
 
-  // Remove them from storage after reading.
+  // This is a one-time handoff, so remove it after reading to avoid reapplying
+  // old filters on a later independent visit.
   localStorage.removeItem('user_search_filters')
 
   if (savedFilters) {
@@ -279,7 +306,8 @@ onMounted(async () => {
       console.error('Error loading filters from storage', e)
     }
   }
-  // Restore the list state from the URL.
+
+  // Restore the canonical directory state from the URL when the page is opened directly, refreshed, or reached through a shared link.
   let restoredPage = 1
 
   if (typeof route.query.filters === 'string') {
@@ -307,7 +335,7 @@ onMounted(async () => {
     }
   }
 
-  // Let the existing filter watcher reset pagination before restoring the page.
+  // Let the filter watcher finish resetting pagination before applying the page saved in the URL, then clamp it to the currently valid page range.
   await nextTick()
 
   currentPage.value = Math.min(Math.max(1, restoredPage), totalPages.value)
@@ -319,7 +347,7 @@ onMounted(async () => {
   })
 })
 
-// Function to clear all filters and search state
+// Reset every filter, search, and pagination value to the initial directory state.
 const clearAllFilters = () => {
   selectedProgramme.value = 'All programmes'
   selectedCities.value = []
@@ -331,6 +359,8 @@ const clearAllFilters = () => {
   localStorage.removeItem('user_search_filters')
 }
 
+// Translate programme labels into keywords used to match the source data.
+// This handles differences between user-facing names and imported programme names.
 const programmeMapping = {
   'Multimedia Design': ['multimedia', 'multimediedesigner'],
   'Datamatiker / Computer Science': ['datamatiker', 'computer', 'it'],
@@ -344,10 +374,11 @@ const programmeMapping = {
   'Cyber Security': ['security', 'cyber', 'it'],
 }
 
-// Filter companies based on programme, cities, fields, languages, and name search query
+// Apply every active filter to the normalized company collection.
+// A company must satisfy all filter categories, while multiple values inside one category use OR logic (for example, any selected city may match).
 const filteredCompanies = computed(() => {
   return companies.value.filter((company) => {
-    // 1. Programme filter
+    // Match the selected programme against one or more source-programme keywords.
     let matchesProgramme = true
     if (selectedProgramme.value && selectedProgramme.value !== 'All programmes') {
       const keywords = programmeMapping[selectedProgramme.value] || [
@@ -359,7 +390,7 @@ const filteredCompanies = computed(() => {
       })
     }
 
-    // 2. Cities filter (checkboxes: if none selected, show all)
+    // With no city selected, all cities remain visible; otherwise one selected city must match the company's city.
     let matchesCity = true
     if (selectedCities.value.length > 0) {
       matchesCity = selectedCities.value.some(
@@ -367,14 +398,12 @@ const filteredCompanies = computed(() => {
       )
     }
 
-    // 3. Internship fields filter (optional)
-    // Match any selected internship field.
-    // With no fields selected, keep all companies.
+    // Internship fields use the same optional-filter rule: no selection means no restriction, while one matching field is enough.
     const matchesFields =
       selectedFields.value.length === 0 ||
       selectedFields.value.some((field) => company.internshipFields.includes(field))
 
-    // 4. Language filter
+    // Each enabled language checkbox is an additional requirement. Both enabled checkboxes therefore mean that the company must support both languages.
     let matchesLanguage = true
     if (
       languageEnglish.value &&
@@ -391,7 +420,7 @@ const filteredCompanies = computed(() => {
       matchesLanguage = false
     }
 
-    // 5. Name search query filter
+    // Search is case-insensitive and checks whether the company name contains the entered text.
     let matchesSearch = true
     if (searchQuery.value.trim()) {
       const query = searchQuery.value.toLowerCase()
@@ -402,7 +431,8 @@ const filteredCompanies = computed(() => {
   })
 })
 
-// Pagination computed properties
+// Calculate the number of pages and the compact page-button range.
+// Computed values recalculate whenever the filtered result count changes.
 const totalPages = computed(() => {
   return Math.ceil(filteredCompanies.value.length / itemsPerPage) || 1
 })
@@ -421,7 +451,8 @@ const paginatedCompanies = computed(() => {
   return filteredCompanies.value.slice(start, end)
 })
 
-// Reset page to 1 when any filter or search query changes
+// A changed filter or search term must start from page one; otherwise the user
+// could remain on a page that no longer exists for the new result set.
 watch(
   [selectedProgramme, selectedCities, selectedFields, languageEnglish, languageDanish, searchQuery],
   () => {
@@ -429,15 +460,18 @@ watch(
   },
 )
 
-// Remember the list state without adding it to the company URL.
+// Save the current list query temporarily before opening a details page.
+// The details page can use this value to return the user to the same results.
 const rememberCompanySearch = () => {
   try {
     sessionStorage.setItem('companies_return_query', JSON.stringify(listQuery.value))
   } catch {
-    // Company navigation still works if storage is unavailable.
+    // Navigation remains usable when browser storage is blocked or unavailable.
   }
 }
 
+// Resolve a company by id, remember the current list state, and navigate to
+// the details route using the stable slug rather than exposing raw data.
 const openDetails = (id) => {
   const company = companies.value.find((item) => String(item.id) === String(id))
 
@@ -451,7 +485,9 @@ const openDetails = (id) => {
   })
 }
 
-// Function to download filtered companies list as PDF using jsPDF
+// Generate a printable PDF containing the currently filtered companies.
+// jsPDF draws the document manually so headers, links, page breaks, and
+// consistent branding can be controlled on every page.
 const downloadPDF = () => {
   if (!filteredCompanies.value.length) return
 
@@ -461,6 +497,7 @@ const downloadPDF = () => {
     format: 'a4',
   })
 
+  // Reusable document colors and layout constants keep the generated pages consistent.
   const red = [217, 0, 27]
   const ink = [17, 24, 32]
   const muted = [95, 103, 112]
@@ -475,6 +512,7 @@ const downloadPDF = () => {
   const date = new Date().toLocaleDateString('en-GB')
   let y = 0
 
+  // Convert source abbreviations to labels that are understandable in the PDF.
   const programmeLabels = {
     datamatiker: 'Datamatiker / Computer Science',
     multimediedesigner: 'Multimedia Design',
@@ -488,11 +526,14 @@ const downloadPDF = () => {
     danish: 'Danish',
   }
 
+  // Replace missing values with an explicit label instead of leaving blank rows.
   const displayValue = (value) => {
     const text = String(value ?? '').trim()
     return text || 'Not provided'
   }
 
+  // Accept only HTTP(S) website links so PDF annotations cannot use unsupported
+  // or unsafe protocols.
   const websiteLink = (value) => {
     if (!value) return undefined
 
@@ -505,6 +546,7 @@ const downloadPDF = () => {
     }
   }
 
+  // Draw the shared header and, on the first page, the document title and summary.
   const drawPageHeader = (firstPage = false) => {
     doc.setFillColor(...red)
     doc.rect(0, 0, 210, 3, 'F')
@@ -541,15 +583,18 @@ const downloadPDF = () => {
     }
   }
 
+  // Start a new PDF page and redraw the standard header.
   const newPage = () => {
     doc.addPage()
     drawPageHeader()
   }
 
+  // Start a new page before content would cross the printable bottom margin.
   const ensureSpace = (height) => {
     if (y + height > bottom) newPage()
   }
 
+  // Draw wrapped paragraph text while checking available space line by line.
   const drawText = (text, size = 10, color = ink) => {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(size)
@@ -568,6 +613,7 @@ const downloadPDF = () => {
     })
   }
 
+  // Draw one labeled company-detail row, optionally adding a clickable link.
   const drawRow = (label, value, link) => {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(9.5)
@@ -599,6 +645,7 @@ const downloadPDF = () => {
     y += 2
   }
 
+  // Render the report heading, active filters, and usage notice before the cards.
   drawPageHeader(true)
 
   const filterLabels = activeFilters.value.map((filter) => filter.label)
@@ -623,6 +670,7 @@ const downloadPDF = () => {
 
   y += 8
 
+  // Render each filtered company as a self-contained card with contact details.
   filteredCompanies.value.forEach((company, index) => {
     const programmes = company.sourceProgrammes
       .map((programme) => {
@@ -676,7 +724,8 @@ const downloadPDF = () => {
 
     const blockHeight = titleHeight + 7 + descriptionHeight + rowsHeight + 8
 
-    // Keep each company together when it fits on a fresh page.
+    // Keep a company card together when it fits on a fresh page; otherwise
+    // reserve enough space for its heading and let the remaining rows continue.
     if (blockHeight <= bottom - 29) {
       ensureSpace(blockHeight)
     } else {
@@ -715,6 +764,7 @@ const downloadPDF = () => {
     y += 8
   })
 
+  // Add the footer after all pages exist so the final page count is available.
   const pageCount = doc.getNumberOfPages()
 
   for (let page = 1; page <= pageCount; page++) {
@@ -736,10 +786,13 @@ const downloadPDF = () => {
 </script>
 
 <template>
+  <!-- The page wrapper provides the background, responsive spacing, and bottom
+       decorative area while keeping the interactive content above the artwork. -->
   <div
     class="relative isolate min-h-screen bg-sky text-ink px-4 sm:px-6 pt-8 pb-[210px] sm:pb-[290px] lg:pb-[360px]"
   >
-    <!-- Decorative building and sun below the results -->
+    <!-- Decorative illustration is visual-only: it does not receive pointer
+         events and is hidden from assistive technology. -->
     <div
       aria-hidden="true"
       class="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[200px] sm:h-[300px] lg:h-[400px] overflow-hidden"
@@ -753,7 +806,8 @@ const downloadPDF = () => {
       />
     </div>
     <div class="relative z-10 max-w-[var(--width-content)] mx-auto">
-      <!-- Page heading -->
+      <!-- Introductory section explains the purpose of the directory and gives
+           the user a short instruction before the filtering controls. -->
       <section class="relative mb-10 sm:mb-12">
         <div class="relative z-10 md:pr-[240px] lg:pr-[320px]">
           <h1
@@ -772,7 +826,8 @@ const downloadPDF = () => {
           </p>
         </div>
 
-        <!-- Decorative paper plane -->
+        <!-- Decorative illustration reinforces the visual design on larger screens
+             without affecting the document's content or accessibility tree. -->
         <img
           src="/images/paper-plane-trail.svg"
           alt=""
@@ -782,6 +837,8 @@ const downloadPDF = () => {
         />
       </section>
 
+      <!-- On small screens this button expands or collapses the filter sidebar,
+           preserving space while keeping all filtering options available. -->
       <button
         type="button"
         @click="mobileFiltersOpen = !mobileFiltersOpen"
@@ -801,16 +858,19 @@ const downloadPDF = () => {
         </span>
       </button>
 
-      <!-- Filters and results -->
+      <!-- Main two-column layout: filters are on the left and the reactive
+           result area is on the right; it becomes a single column on mobile. -->
       <div class="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 items-start">
-        <!-- Left sidebar: filters -->
+        <!-- Sidebar contains every control that contributes to filteredCompanies.
+             Its responsive visibility is controlled by mobileFiltersOpen. -->
         <aside
           id="company-filters"
           aria-label="Company filters"
           class="min-w-0 bg-paper border border-ink/10 rounded-md p-5 lg:block"
           :class="mobileFiltersOpen ? 'block' : 'hidden'"
         >
-          <!-- Filter heading and reset button -->
+          <!-- Sidebar header identifies the controls and provides a single action
+               for returning all filters to their default values. -->
           <div class="flex items-center justify-between gap-3 mb-6">
             <h2 class="text-xl font-semibold text-ink">Filters</h2>
 
@@ -823,7 +883,8 @@ const downloadPDF = () => {
             </button>
           </div>
 
-          <!-- Study programme -->
+          <!-- Programme selector uses the reusable CustomSelect component and
+               updates selectedProgramme through v-model. -->
           <div class="mb-6">
             <h3 class="text-[15px] font-semibold text-ink mb-3">Study programme</h3>
 
@@ -837,7 +898,8 @@ const downloadPDF = () => {
             />
           </div>
 
-          <!-- Internship fields -->
+          <!-- Field checkboxes are generated from the selected programme so the
+               user sees relevant internship areas instead of one fixed list. -->
           <fieldset class="min-w-0 mb-6">
             <legend class="text-[15px] font-semibold text-ink mb-3">Internship fields</legend>
 
@@ -871,7 +933,8 @@ const downloadPDF = () => {
             </div>
           </fieldset>
 
-          <!-- Cities -->
+          <!-- City checkboxes are generated from the loaded dataset and allow
+               several locations to be selected at the same time. -->
           <fieldset class="min-w-0 mb-6">
             <legend class="text-[15px] font-semibold text-ink mb-3">Cities</legend>
 
@@ -893,7 +956,8 @@ const downloadPDF = () => {
             </div>
           </fieldset>
 
-          <!-- Website language -->
+          <!-- Language checkboxes add optional website-language requirements to
+               the same reactive filter state as the other controls. -->
           <fieldset class="min-w-0">
             <legend class="text-[15px] font-semibold text-ink mb-3">Website language</legend>
 
@@ -915,6 +979,8 @@ const downloadPDF = () => {
               <span>Danish</span>
             </label>
           </fieldset>
+          <!-- On mobile, this action closes the sidebar and confirms the current
+               result count without changing any selected values. -->
           <button
             type="button"
             @click="mobileFiltersOpen = false"
@@ -924,10 +990,11 @@ const downloadPDF = () => {
           </button>
         </aside>
 
-        <!-- Right Content Area -->
+        <!-- Result area displays search, status information, active filters,
+             company cards, empty state, and pagination. -->
         <div class="min-w-0 space-y-6">
-          <!-- Top bar with counter, search input, and Download PDF button -->
-          <!-- Search and PDF download -->
+          <!-- The toolbar combines the live name search with the PDF export
+               action. Both operate on the same filtered result collection. -->
           <div class="flex flex-col sm:flex-row sm:items-center gap-4">
             <div class="flex-1 min-w-0">
               <label for="company-search" class="sr-only"> Search company by name </label>
@@ -966,7 +1033,8 @@ const downloadPDF = () => {
             </button>
           </div>
 
-          <!-- Result count and current range -->
+          <!-- Accessible status summary reports the total matches and the visible
+               range for the current page. -->
           <div class="flex flex-wrap items-center justify-between gap-2" role="status">
             <p class="text-base font-semibold text-ink">
               {{ filteredCompanies.length }}
@@ -981,7 +1049,8 @@ const downloadPDF = () => {
             </p>
           </div>
 
-          <!-- Selected filters with remove buttons -->
+          <!-- Active filters are shown as removable chips, giving users a quick
+               way to understand and edit the current search state. -->
           <div
             v-if="activeFilters.length > 0"
             class="flex flex-wrap items-center gap-2"
@@ -1008,14 +1077,16 @@ const downloadPDF = () => {
             </button>
           </div>
 
-          <!-- Companies grid: 14 items per page -->
+          <!-- Only paginatedCompanies is rendered, so the grid shows at most
+               itemsPerPage cards while preserving the complete filtered dataset. -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-6">
             <article
               v-for="company in paginatedCompanies"
               :key="company.id"
               class="min-w-0 flex flex-col bg-paper border border-ink/10 rounded-md p-5 xl:p-6"
             >
-              <!-- Company name and location -->
+              <!-- Card header identifies the company and displays its location
+                   when the source data contains one. -->
               <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 mb-4">
                 <h2
                   class="font-sans text-[22px] xl:text-[24px] font-semibold text-ink leading-[1.25] tracking-[-0.02em] break-words"
@@ -1028,7 +1099,8 @@ const downloadPDF = () => {
                 </p>
               </div>
 
-              <!-- Short preview; the full description is on the company page -->
+              <!-- The clamped preview gives context without making cards
+                   excessively tall; the complete text is available on details. -->
               <p
                 v-if="company.description"
                 class="text-[15px] text-ink/80 leading-relaxed line-clamp-3 mb-6"
@@ -1036,7 +1108,8 @@ const downloadPDF = () => {
                 {{ company.description }}
               </p>
 
-              <!-- Programme and website languages -->
+              <!-- Metadata section summarizes programme eligibility and website
+                   languages, with explicit fallback text for missing values. -->
               <div class="mt-auto">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-5">
                   <div class="min-w-0">
@@ -1093,7 +1166,8 @@ const downloadPDF = () => {
                   </div>
                 </div>
 
-                <!-- Company details link -->
+                <!-- This route link opens the full company profile and stores the
+                     current list state so the user can return without losing it. -->
                 <div class="border-t border-ink/10 pt-3">
                   <RouterLink
                     :to="{
@@ -1112,7 +1186,8 @@ const downloadPDF = () => {
             </article>
           </div>
 
-          <!-- Empty State -->
+          <!-- Empty state explains why no cards are visible instead of leaving
+               the result area blank after filtering. -->
           <div
             v-if="filteredCompanies.length === 0"
             class="bg-white/50 backdrop-blur-md p-10 rounded-[28px] text-center text-[#102a43] font-semibold shadow-sm"
@@ -1120,7 +1195,8 @@ const downloadPDF = () => {
             No companies found matching your selected filters or search query.
           </div>
 
-          <!-- Pagination -->
+          <!-- Pagination provides previous/next controls and a compact page
+               selector; it is rendered only when more than one page exists. -->
           <nav
             v-if="totalPages > 1"
             aria-label="Company results pages"
