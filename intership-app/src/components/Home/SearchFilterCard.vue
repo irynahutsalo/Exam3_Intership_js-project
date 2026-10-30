@@ -231,47 +231,6 @@ const toggleSelectAllCities = () => {
   }
 }
 
-const programFieldsMap = {
-  'Multimedia Design': [
-    'UX/UI Design',
-    'Frontend Development',
-    'Graphic Design',
-    'Content Creation',
-    'Social Media',
-    'Web Content / CMS',
-    'Digital Marketing',
-  ],
-  'Datamatiker / Computer Science': [
-    'Frontend Development',
-    'Backend Development',
-    'Full-stack Development',
-    'Cyber Security',
-    'Database Management',
-  ],
-  'Marketing Management': [
-    'Digital Marketing',
-    'Social Media Management',
-    'Market Research',
-    'Customer Experience',
-    'Sales',
-  ],
-  'Service & Experience Management': [
-    'Customer Experience',
-    'Event Management',
-    'HR & People',
-    'Operations & Logistics',
-    'Project Management',
-  ],
-}
-
-const defaultFields = [
-  'Customer Experience',
-  'Event Management',
-  'HR & People',
-  'Operations & Logistics',
-  'Project Management',
-]
-
 const languages = ref(['English', 'Danish'])
 
 // Derive relevant internship fields from the shared data utility.

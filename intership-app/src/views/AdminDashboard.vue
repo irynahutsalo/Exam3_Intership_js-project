@@ -488,15 +488,6 @@ const getLanguagesList = (company) => {
     .filter(Boolean)
 }
 
-const formatLangCode = (code) => {
-  // Normalize common language names and codes for compact display.
-  const clean = code.trim().toLowerCase()
-  if (clean === 'danish' || clean === 'da' || clean === 'dk') return 'DK'
-  if (clean === 'english' || clean === 'eng' || clean === 'en') return 'EN'
-  if (clean === 'german' || clean === 'de') return 'DE'
-  return code.slice(0, 2).toUpperCase()
-}
-
 const filteredCompanies = computed(() => {
   // Apply both text search and the selected listing-status filter.
   return companies.value.filter((company) => {
