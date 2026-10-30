@@ -62,6 +62,50 @@ const availableCities = computed(() => {
   return Array.from(citySet).sort()
 })
 
+// This map documents the fields that are normally associated with each programme.
+// The shared internship-field utility is used below so the same rules are used
+// on the home page and on this directory page.
+const programFieldsMap = {
+  'Multimedia Design': [
+    'UX/UI Design',
+    'Frontend Development',
+    'Graphic Design',
+    'Content Creation',
+    'Social Media',
+    'Web Content / CMS',
+    'Digital Marketing',
+  ],
+  'Datamatiker / Computer Science': [
+    'Frontend Development',
+    'Backend Development',
+    'Full-stack Development',
+    'Cyber Security',
+    'Database Management',
+  ],
+  'Marketing Management': [
+    'Digital Marketing',
+    'Social Media Management',
+    'Market Research',
+    'Customer Experience',
+    'Sales',
+  ],
+  'Service & Experience Management': [
+    'Customer Experience',
+    'Event Management',
+    'HR & People',
+    'Operations & Logistics',
+    'Project Management',
+  ],
+}
+
+const defaultFields = [
+  'Customer Experience',
+  'Event Management',
+  'HR & People',
+  'Operations & Logistics',
+  'Project Management',
+]
+
 // Ask the shared utility for fields relevant to the currently selected programme.
 const availableInternshipFields = computed(() => {
   return getAvailableFields(companiesData, selectedProgramme.value)
@@ -424,6 +468,21 @@ const rememberCompanySearch = () => {
   } catch {
     // Navigation remains usable when browser storage is blocked or unavailable.
   }
+}
+
+// Resolve a company by id, remember the current list state, and navigate to
+// the details route using the stable slug rather than exposing raw data.
+const openDetails = (id) => {
+  const company = companies.value.find((item) => String(item.id) === String(id))
+
+  if (!company) return
+
+  rememberCompanySearch()
+
+  router.push({
+    name: 'company-details',
+    params: { slug: company.slug },
+  })
 }
 
 // Generate a printable PDF containing the currently filtered companies.
